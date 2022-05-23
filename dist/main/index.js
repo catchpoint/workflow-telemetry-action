@@ -1985,12 +1985,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
+const path_1 = __importDefault(__webpack_require__(622));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.info(`[WM] Initialing ...`);
+            const fork = __webpack_require__(129).fork;
+            fork(path_1.default.join(__dirname, '../sc/index.js'), [], {
+                detached: true
+            });
             core.info(`[WM] Initialing completed`);
         }
         catch (error) {
@@ -2008,6 +2016,14 @@ run();
 
 "use strict";
 module.exports = require("assert");;
+
+/***/ }),
+
+/***/ 129:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");;
 
 /***/ }),
 

@@ -11,9 +11,10 @@
     "lint": "eslint src/**/*.ts",
     "package:main": "ncc build --source-map src/main.ts --out dist/main",
     "package:post": "ncc build --source-map src/post.ts --out dist/post",
-    "package": "npm run package:main && npm run package:post",
+    "package:statCollector": "ncc build --source-map src/statCollector.ts --out dist/sc",
+    "package": "npm run package:main && npm run package:post && npm run package:statCollector",
     "test": "echo \"Warn: no test specified\" && exit 0",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run package && npm test"
   },
   "repository": {
     "type": "git",
@@ -28,7 +29,8 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.4.0",
-    "@actions/exec": "^1.1.0"
+    "@actions/exec": "^1.1.0",
+    "systeminformation": "^5.11.15"
   },
   "devDependencies": {
     "@types/node": "^16.3.3",
