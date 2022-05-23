@@ -1,0 +1,43 @@
+{
+  "name": "workflow-metrics-action",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Workflow Metrics Action",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "package:main": "ncc build --source-map src/main.ts --out dist/main",
+    "package:post": "ncc build --source-map src/post.ts --out dist/post",
+    "package": "npm run package:main && npm run package:post",
+    "test": "echo \"Warn: no test specified\" && exit 0",
+    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serkan-ozal/workflow-metrics-action.git"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "setup"
+  ],
+  "author": "Serkan Özal <serkanozal86@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@actions/exec": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.3.3",
+    "@typescript-eslint/parser": "^4.28.3",
+    "@vercel/ncc": "^0.25.1",
+    "eslint": "^7.31.0",
+    "eslint-plugin-github": "^4.1.1",
+    "js-yaml": "^4.1.0",
+    "prettier": "2.2.1",
+    "typescript": "^4.1.3"
+  }
+}

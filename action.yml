@@ -1,0 +1,7 @@
+name: "Workflow Metrics"
+description: "Workflow Metrics"
+author: "Serkan Özal <serkanozal86@gmail.com>"
+runs:
+  using: "node12"
+  main: dist/main/index.js
+  post: dist/post/index.js
