@@ -1995,10 +1995,12 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.info(`[WM] Initialing ...`);
-            const fork = __webpack_require__(129).fork;
-            fork(path_1.default.join(__dirname, '../sc/index.js'), [], {
-                detached: true
+            const spawn = __webpack_require__(129).spawn;
+            const child = spawn(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
+                detached: true,
+                stdio: 'ignore'
             });
+            child.unref();
             core.info(`[WM] Initialing completed`);
         }
         catch (error) {

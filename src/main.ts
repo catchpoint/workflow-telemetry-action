@@ -5,11 +5,12 @@ async function run(): Promise<void> {
   try {
     core.info(`[WM] Initialing ...`)
 
-    const fork = require('child_process').fork
-
-    fork(path.join(__dirname, '../sc/index.js'), [], {
-      detached: true
+    const spawn = require('child_process').spawn
+    const child = spawn(process.argv[0], [path.join(__dirname, '../sc/index.js')], {
+      detached: true,
+      stdio: 'ignore'
     })
+    child.unref()
 
     core.info(`[WM] Initialing completed`)
   } catch (error: any) {
