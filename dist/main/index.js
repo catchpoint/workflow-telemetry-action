@@ -1998,7 +1998,7 @@ function run() {
             const spawn = __webpack_require__(129).spawn;
             const child = spawn(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
                 detached: true,
-                stdio: 'ignore'
+                stdio: 'inherit'
             });
             child.unref();
             core.info(`[WM] Initialing completed`);

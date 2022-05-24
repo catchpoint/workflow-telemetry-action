@@ -8,7 +8,7 @@ async function run(): Promise<void> {
     const spawn = require('child_process').spawn
     const child = spawn(process.argv[0], [path.join(__dirname, '../sc/index.js')], {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'inherit'
     })
     child.unref()
 

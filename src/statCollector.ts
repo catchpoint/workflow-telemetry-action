@@ -58,6 +58,6 @@ setInterval(() => {
   core.info('>>>>> Dumping network stats ...')
   for (let [time, stats] of networkStatsHistogram.entries()) {
     const timeStr: string = new Date(time).toISOString()
-    core.info(`>>>>> Time: ${timeStr}, stats: ${stats}`)
+    core.info(`>>>>> Time: ${timeStr}, stats: ${JSON.stringify(stats)}`)
   }
 }, 10000)
