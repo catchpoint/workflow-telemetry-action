@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import si from 'systeminformation'
 
 const STATS_FREQ: number = 5000
@@ -32,7 +33,7 @@ function collectNetworkStats(statTime: number, timeInterval: number) {
       networkStatsHistogram.set(statTime, networkStats)
     })
     .catch((error: any) => {
-      console.error(error)
+      core.error(error)
     })
 }
 
@@ -49,18 +50,14 @@ function collectStats() {
   collectNetworkStats(statCollectTime, STATS_FREQ)
 }
 
-console.log('>>>>> Starting stat collector ...')
+core.info('>>>>> Starting stat collector ...')
 
 setInterval(collectStats, STATS_FREQ)
 
 setInterval(() => {
-  console.log('>>>>> Dumping network stats ...')
+  core.info('>>>>> Dumping network stats ...')
   for (let [time, stats] of networkStatsHistogram.entries()) {
-    console.log(
-      "'>>>>> Time: ",
-      new Date(time).toISOString(),
-      ', stats: ',
-      stats
-    )
+    const timeStr: string = new Date(time).toISOString()
+    core.info(`>>>>> Time: ${timeStr}, stats: ${stats}`)
   }
 }, 10000)
