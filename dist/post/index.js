@@ -1985,17 +1985,47 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
+const http_1 = __importDefault(__webpack_require__(605));
+const buffer_1 = __webpack_require__(293);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.info(`[WM] Finishing ...`);
+            yield getNetworkStats();
             core.info(`[WM] Finish completed`);
         }
         catch (error) {
             core.setFailed(error.message);
         }
+    });
+}
+function getNetworkStats() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const options = {
+            hostname: 'localhost',
+            port: 7777,
+            path: '/network',
+            method: 'GET',
+        };
+        const req = http_1.default.request(options, res => {
+            console.log(`[WM] statusCode: ${res.statusCode}`);
+            let buffer = buffer_1.Buffer.alloc(0);
+            res.on('data', (data) => {
+                buffer = buffer_1.Buffer.concat([buffer, data]);
+            });
+            res.on('end', () => {
+                console.log(`[WM] Network stats: ${buffer.toString()}`);
+            });
+        });
+        req.on('error', error => {
+            console.error(error);
+        });
+        req.end();
     });
 }
 run();
@@ -2008,6 +2038,14 @@ run();
 
 "use strict";
 module.exports = require("assert");;
+
+/***/ }),
+
+/***/ 293:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("buffer");;
 
 /***/ }),
 
