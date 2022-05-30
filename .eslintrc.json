@@ -1,5 +1,6 @@
 {
   "plugins": [
+    "jest",
     "@typescript-eslint"
   ],
   "extends": [
@@ -12,6 +13,7 @@
     "project": "./tsconfig.json"
   },
   "rules": {
+    "i18n-text/no-en": "off",
     "eslint-comments/no-use": "off",
     "import/no-namespace": "off",
     "no-unused-vars": "off",
@@ -40,7 +42,7 @@
     ],
     "@typescript-eslint/no-array-constructor": "error",
     "@typescript-eslint/no-empty-interface": "error",
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-extraneous-class": "error",
     "@typescript-eslint/no-for-in-array": "error",
     "@typescript-eslint/no-inferrable-types": "error",
@@ -68,6 +70,7 @@
   },
   "env": {
     "node": true,
-    "es6": true
+    "es6": true,
+    "jest/globals": true
   }
 }

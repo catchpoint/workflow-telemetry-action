@@ -1,5 +1,5 @@
 import si from 'systeminformation'
-import {createServer, IncomingMessage, Server, ServerResponse} from 'http'
+import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 
 const STATS_FREQ: number = 5000
 let statCollectTime: number = 0
@@ -8,8 +8,8 @@ let statCollectTime: number = 0
 ///////////////////////////
 
 interface NetworkStats {
-  readonly time: number,
-  readonly rxKb: number,
+  readonly time: number
+  readonly rxKb: number
   readonly txKb: number
 }
 
@@ -57,22 +57,24 @@ function startHttpServer() {
   const HOST: string = 'localhost'
   const PORT: number = 7777
 
-  const server: Server = createServer((request: IncomingMessage, response: ServerResponse) => {
-    switch (request.url) {
-      case '/network': {
-        console.log('[WM] Received network request')
-        if (request.method === 'GET') {
-          console.log('[WM] Received network get request')
-          response.end(JSON.stringify(networkStatsHistogram))
+  const server: Server = createServer(
+    (request: IncomingMessage, response: ServerResponse) => {
+      switch (request.url) {
+        case '/network': {
+          console.log('[WM] Received network request')
+          if (request.method === 'GET') {
+            console.log('[WM] Received network get request')
+            response.end(JSON.stringify(networkStatsHistogram))
+          }
+          break
         }
-        break;
-      }
-      default: {
-        response.statusCode = 404
-        response.end()
+        default: {
+          response.statusCode = 404
+          response.end()
+        }
       }
     }
-  })
+  )
 
   server.listen(PORT, HOST, () => {
     console.log(`[WM] Stat server listening on port ${PORT}`)
