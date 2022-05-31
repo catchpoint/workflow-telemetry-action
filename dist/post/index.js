@@ -64437,6 +64437,7 @@ function getNetworkStats() {
     return __awaiter(this, void 0, void 0, function* () {
         core.info('[WM] Get network stats!');
         const response = yield axios_1.default.get('http://localhost:7777/network');
+        core.info(`[WM] Got Network Data: ${JSON.stringify(response.data)}`);
         return response;
     });
 }

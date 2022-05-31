@@ -2,8 +2,6 @@ import * as core from '@actions/core'
 import * as github from '@actions/github';
 import axios, { AxiosResponse } from 'axios';
 
-import http, { ClientRequest, RequestOptions } from 'http'
-import { Buffer } from 'buffer'
 import { Octokit } from '@octokit/action'
 
 const { pull_request } = github.context.payload;
@@ -37,6 +35,9 @@ async function run(): Promise<void> {
 async function getNetworkStats(): Promise<AxiosResponse<any, any>> {
   core.info('[WM] Get network stats!')
   const response = await axios.get('http://localhost:7777/network')
+
+  core.info(`[WM] Got Network Data: ${JSON.stringify(response.data)}`)
+
   return response
 }
 
