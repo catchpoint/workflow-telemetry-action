@@ -1991,17 +1991,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
 const path_1 = __importDefault(__webpack_require__(622));
+const child_process_1 = __webpack_require__(129);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             core.info(`[WM] Initialing ...`);
-            const spawn = __webpack_require__(129).spawn;
-            const child = spawn(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
+            const child = (0, child_process_1.spawn)(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
                 detached: true,
-                stdio: 'inherit'
+                stdio: 'ignore'
             });
             child.unref();
-            core.info(`[WM] Initialing completed`);
+            core.info(`[WM] Initialization completed`);
         }
         catch (error) {
             core.setFailed(error.message);
