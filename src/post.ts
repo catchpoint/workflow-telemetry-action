@@ -11,6 +11,11 @@ async function run(): Promise<void> {
   try {
     logger.info(`Finishing ...`)
 
+    const octokit: Octokit = new Octokit()
+
+    const jobId: number = await getJobId(octokit)
+    logger.info(`Job id: ${jobId}`)
+
     // Trigger stat collect, so we will have remaining stats since the latest schedule
     await triggerStatCollect()
 
@@ -53,7 +58,7 @@ async function run(): Promise<void> {
       }
     })
 
-    const octokit = new Octokit()
+
     if (pull_request) {
       logger.info(`Found Pull Request: ${pull_request}`)
 
@@ -155,6 +160,31 @@ async function getGraph(options: any): Promise<any> {
   )
 
   return response.data
+}
+
+async function getJobId(octokit: Octokit): Promise<number>  {
+  const getJobId = async() => {
+    const result = await octokit.rest.actions.listJobsForWorkflowRun({
+      owner: process.env.GITHUB_REPOSITORY_OWNER as string,
+      repo: (process.env.GITHUB_REPOSITORY as string).split('/')[1],
+      run_id: parseInt(process.env.GITHUB_RUN_ID as string, 10),
+      per_page: 100
+    });
+    const currentJobs = result.data.jobs
+            .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME)
+    if (currentJobs && currentJobs.length) {
+      return currentJobs[0].id
+    }
+    return null
+  }
+  for (let i = 0; i < 10; i++) {
+    const currentJobId = await getJobId()
+    if (currentJobId) {
+      return currentJobId
+    }
+    await new Promise(r => setTimeout(r, 1000))
+  }
+  return -1
 }
 
 run()

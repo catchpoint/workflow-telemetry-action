@@ -64471,6 +64471,9 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             logger.info(`Finishing ...`);
+            const octokit = new action_1.Octokit();
+            const jobId = yield getJobId(octokit);
+            logger.info(`Job id: ${jobId}`);
             // Trigger stat collect, so we will have remaining stats since the latest schedule
             yield triggerStatCollect();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
@@ -64507,7 +64510,6 @@ function run() {
                     points: diskWriteX
                 }
             });
-            const octokit = new action_1.Octokit();
             if (pull_request) {
                 logger.info(`Found Pull Request: ${pull_request}`);
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
@@ -64596,6 +64598,32 @@ function getGraph(options) {
         };
         const response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/line/time', payload);
         return response.data;
+    });
+}
+function getJobId(octokit) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const getJobId = () => __awaiter(this, void 0, void 0, function* () {
+            const result = yield octokit.rest.actions.listJobsForWorkflowRun({
+                owner: process.env.GITHUB_REPOSITORY_OWNER,
+                repo: process.env.GITHUB_REPOSITORY.split('/')[1],
+                run_id: parseInt(process.env.GITHUB_RUN_ID, 10),
+                per_page: 100
+            });
+            const currentJobs = result.data.jobs
+                .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME);
+            if (currentJobs && currentJobs.length) {
+                return currentJobs[0].id;
+            }
+            return null;
+        });
+        for (let i = 0; i < 10; i++) {
+            const currentJobId = yield getJobId();
+            if (currentJobId) {
+                return currentJobId;
+            }
+            yield new Promise(r => setTimeout(r, 1000));
+        }
+        return -1;
     });
 }
 run();
