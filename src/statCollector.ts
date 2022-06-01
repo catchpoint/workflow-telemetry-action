@@ -4,11 +4,12 @@ import * as logger from './logger'
 
 const STATS_FREQ: number =
   parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
-const HOST: string = 'localhost'
+const SERVER_HOST: string = 'localhost'
 // TODO
-// It is better to find an available port and use it.
-// The post script (post.ts) needs to know the selected port
-const PORT: number = 7777
+// It is better to find an available/free port automatically and use it.
+// Then the post script (`post.ts`) needs to know the selected port.
+const SERVER_PORT: number =
+  parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777
 
 let expectedScheduleTime: number = 0
 let statCollectTime: number = 0
@@ -124,8 +125,8 @@ function startHttpServer() {
     }
   )
 
-  server.listen(PORT, HOST, () => {
-    logger.info(`Stat server listening on port ${PORT}`)
+  server.listen(SERVER_PORT, SERVER_HOST, () => {
+    logger.info(`Stat server listening on port ${SERVER_PORT}`)
   })
 }
 

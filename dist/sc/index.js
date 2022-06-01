@@ -17416,11 +17416,11 @@ const systeminformation_1 = __importDefault(__webpack_require__(284));
 const http_1 = __webpack_require__(605);
 const logger = __importStar(__webpack_require__(636));
 const STATS_FREQ = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000;
-const HOST = 'localhost';
+const SERVER_HOST = 'localhost';
 // TODO
-// It is better to find an available port and use it.
-// The post script (post.ts) needs to know the selected port
-const PORT = 7777;
+// It is better to find an available/free port automatically and use it.
+// Then the post script (`post.ts`) needs to know the selected port.
+const SERVER_PORT = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777;
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
 const networkStatsHistogram = [];
@@ -17511,8 +17511,8 @@ function startHttpServer() {
             }
         }
     });
-    server.listen(PORT, HOST, () => {
-        logger.info(`Stat server listening on port ${PORT}`);
+    server.listen(SERVER_PORT, SERVER_HOST, () => {
+        logger.info(`Stat server listening on port ${SERVER_PORT}`);
     });
 }
 function init() {
