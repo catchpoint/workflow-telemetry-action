@@ -25,11 +25,10 @@ interface NetworkStats {
 
 const networkStatsHistogram: NetworkStats[] = []
 
-function collectNetworkStats(statTime: number, timeInterval: number) {
-  si.networkStats()
+function collectNetworkStats(statTime: number, timeInterval: number): Promise<any> {
+  return si.networkStats()
     .then((data: si.Systeminformation.NetworkStatsData[]) => {
-      let totalRxSec = 0,
-        totalTxSec = 0
+      let totalRxSec = 0, totalTxSec = 0
       for (let nsd of data) {
         totalRxSec += nsd.rx_sec
         totalTxSec += nsd.tx_sec
@@ -59,8 +58,8 @@ interface DiskStats {
   readonly wxMb: number
 }
 
-function collectDiskStats(statTime: number, timeInterval: number) {
-  si.fsStats()
+function collectDiskStats(statTime: number, timeInterval: number): Promise<any> {
+  return si.fsStats()
     .then((data: si.Systeminformation.FsStatsData) => {
       let rxSec = data.rx_sec ? data.rx_sec : 0
       let wxSec = data.wx_sec ? data.wx_sec : 0
@@ -78,49 +77,72 @@ function collectDiskStats(statTime: number, timeInterval: number) {
 
 ///////////////////////////
 
-function collectStats() {
+async function collectStats(triggeredFromScheduler: boolean = true) {
   try {
-    if (!statCollectTime) {
-      const currentTime: number = Date.now()
-      const timeSec: number = currentTime - (currentTime % 1000)
-      statCollectTime = timeSec
-    } else {
-      statCollectTime += STATS_FREQ
-    }
-    collectNetworkStats(statCollectTime, STATS_FREQ)
-    collectDiskStats(statCollectTime, STATS_FREQ)
+    const currentTime: number = Date.now()
+    const timeInterval: number = statCollectTime ? (currentTime - statCollectTime) : 0
+
+    statCollectTime = currentTime
+
+    const promises: Promise<any>[] = []
+
+    promises.push(collectNetworkStats(statCollectTime, timeInterval))
+    promises.push(collectDiskStats(statCollectTime, timeInterval))
+
+    return promises
   } finally {
-    expectedScheduleTime += STATS_FREQ
-    setTimeout(collectStats, expectedScheduleTime - Date.now())
+    if (triggeredFromScheduler) {
+      expectedScheduleTime += STATS_FREQ
+      setTimeout(collectStats, expectedScheduleTime - Date.now())
+    }
   }
 }
 
 function startHttpServer() {
   const server: Server = createServer(
-    (request: IncomingMessage, response: ServerResponse) => {
-      switch (request.url) {
-        case '/network': {
-          if (request.method === 'GET') {
-            response.end(JSON.stringify(networkStatsHistogram))
-          } else {
-            response.statusCode = 405
+    async(request: IncomingMessage, response: ServerResponse) => {
+      try {
+        switch (request.url) {
+          case '/network': {
+            if (request.method === 'GET') {
+              response.end(JSON.stringify(networkStatsHistogram))
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
+            break
+          }
+          case '/disk': {
+            if (request.method === 'GET') {
+              response.end(JSON.stringify(diskStatsHistogram))
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
+            break
+          }
+          case '/collect': {
+            if (request.method === 'POST') {
+              await collectStats(false)
+              response.end()
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
+            break
+          }
+          default: {
+            response.statusCode = 404
             response.end()
           }
-          break
         }
-        case '/disk': {
-          if (request.method === 'GET') {
-            response.end(JSON.stringify(diskStatsHistogram))
-          } else {
-            response.statusCode = 405
-            response.end()
-          }
-          break
-        }
-        default: {
-          response.statusCode = 404
-          response.end()
-        }
+      } catch (error: any) {
+        logger.error(error)
+        response.statusCode = 500
+        response.end(JSON.stringify({
+          type: error.type,
+          message: error.message,
+        }))
       }
     }
   )

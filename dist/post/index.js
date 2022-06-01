@@ -64470,7 +64470,9 @@ function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            logger.info(`[WM] Finishing ...`);
+            logger.info(`Finishing ...`);
+            // Trigger stat collect, so we will have remaining stats since the latest schedule
+            yield triggerStatCollect();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
             const { diskReadX, diskWriteX } = yield getDiskStats();
             const networkIORead = yield getGraph({
@@ -64507,7 +64509,7 @@ function run() {
             });
             const octokit = new action_1.Octokit();
             if (pull_request) {
-                logger.info(`[WM] Found Pull Request: ${pull_request}`);
+                logger.info(`Found Pull Request: ${pull_request}`);
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
                         '## Foresight - Workflow Telemetry',
                         '',
@@ -64518,22 +64520,29 @@ function run() {
                     ].join('\n') }));
             }
             else {
-                logger.info(`[WM] Couldn't Find Pull Request`);
+                logger.info(`Couldn't find Pull Request`);
             }
-            logger.info(`[WM] Finish completed`);
+            logger.info(`Finish completed`);
         }
         catch (error) {
             core.setFailed(error.message);
         }
     });
 }
+function triggerStatCollect() {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.debug('Triggering stat collect ...');
+        const response = yield axios_1.default.post('http://localhost:7777/collect');
+        logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
+    });
+}
 function getNetworkStats() {
     return __awaiter(this, void 0, void 0, function* () {
         let networkReadX = [];
         let networkWriteX = [];
-        logger.info('[WM] Get network stats!');
+        logger.debug('Getting network stats ...');
         const response = yield axios_1.default.get('http://localhost:7777/network');
-        logger.info(`[WM] Got Network Data: ${JSON.stringify(response.data)}`);
+        logger.debug(`Got network stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             networkReadX.push({
                 x: element.time,
@@ -64551,9 +64560,9 @@ function getDiskStats() {
     return __awaiter(this, void 0, void 0, function* () {
         let diskReadX = [];
         let diskWriteX = [];
-        logger.info('[WM] Get disk stats!');
+        logger.debug('Getting disk stats ...');
         const response = yield axios_1.default.get('http://localhost:7777/disk');
-        logger.info(`[WM] Got Disk Data: ${JSON.stringify(response.data)}`);
+        logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             diskReadX.push({
                 x: element.time,

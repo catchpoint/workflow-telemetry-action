@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import * as logger from './logger'
-import axios, { AxiosResponse } from 'axios'
+import axios from 'axios'
 
 import { Octokit } from '@octokit/action'
 
@@ -9,7 +9,10 @@ const { pull_request } = github.context.payload
 
 async function run(): Promise<void> {
   try {
-    logger.info(`[WM] Finishing ...`)
+    logger.info(`Finishing ...`)
+
+    // Trigger stat collect, so we will have remaining stats since the latest schedule
+    await triggerStatCollect()
 
     const { networkReadX, networkWriteX } = await getNetworkStats()
     const { diskReadX, diskWriteX } = await getDiskStats()
@@ -52,7 +55,7 @@ async function run(): Promise<void> {
 
     const octokit = new Octokit()
     if (pull_request) {
-      logger.info(`[WM] Found Pull Request: ${pull_request}`)
+      logger.info(`Found Pull Request: ${pull_request}`)
 
       await octokit.rest.issues.createComment({
         ...github.context.repo,
@@ -67,22 +70,28 @@ async function run(): Promise<void> {
         ].join('\n')
       })
     } else {
-      logger.info(`[WM] Couldn't Find Pull Request`)
+      logger.info(`Couldn't find Pull Request`)
     }
 
-    logger.info(`[WM] Finish completed`)
+    logger.info(`Finish completed`)
   } catch (error: any) {
     core.setFailed(error.message)
   }
+}
+
+async function triggerStatCollect(): Promise<any> {
+  logger.debug('Triggering stat collect ...')
+  const response = await axios.post('http://localhost:7777/collect')
+  logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
 }
 
 async function getNetworkStats(): Promise<any> {
   let networkReadX: any[] = []
   let networkWriteX: any[] = []
 
-  logger.info('[WM] Get network stats!')
+  logger.debug('Getting network stats ...')
   const response = await axios.get('http://localhost:7777/network')
-  logger.info(`[WM] Got Network Data: ${JSON.stringify(response.data)}`)
+  logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
 
   response.data.forEach((element: any) => {
     networkReadX.push({
@@ -103,9 +112,9 @@ async function getDiskStats(): Promise<any> {
   let diskReadX: any[] = []
   let diskWriteX: any[] = []
 
-  logger.info('[WM] Get disk stats!')
+  logger.debug('Getting disk stats ...')
   const response = await axios.get('http://localhost:7777/disk')
-  logger.info(`[WM] Got Disk Data: ${JSON.stringify(response.data)}`)
+  logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`)
 
   response.data.forEach((element: any) => {
     diskReadX.push({

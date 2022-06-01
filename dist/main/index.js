@@ -2058,14 +2058,14 @@ if (statFrequencyInput) {
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            logger.info(`[WM] Initialing ...`);
+            logger.info(`Initializing ...`);
             const child = (0, child_process_1.spawn)(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
                 detached: true,
                 stdio: 'ignore',
                 env: Object.assign(Object.assign({}, process.env), { FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ: `${statFrequency}` })
             });
             child.unref();
-            logger.info(`[WM] Initialization completed`);
+            logger.info(`Initialization completed`);
         }
         catch (error) {
             core.setFailed(error.message);

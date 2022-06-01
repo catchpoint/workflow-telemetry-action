@@ -15,7 +15,7 @@ if (statFrequencyInput) {
 
 async function run(): Promise<void> {
   try {
-    logger.info(`[WM] Initialing ...`)
+    logger.info(`Initializing ...`)
 
     const child: ChildProcess = spawn(
       process.argv[0],
@@ -31,7 +31,7 @@ async function run(): Promise<void> {
     )
     child.unref()
 
-    logger.info(`[WM] Initialization completed`)
+    logger.info(`Initialization completed`)
   } catch (error: any) {
     core.setFailed(error.message)
   }

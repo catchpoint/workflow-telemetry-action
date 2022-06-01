@@ -17408,6 +17408,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17425,7 +17434,7 @@ let expectedScheduleTime = 0;
 let statCollectTime = 0;
 const networkStatsHistogram = [];
 function collectNetworkStats(statTime, timeInterval) {
-    systeminformation_1.default.networkStats()
+    return systeminformation_1.default.networkStats()
         .then((data) => {
         let totalRxSec = 0, totalTxSec = 0;
         for (let nsd of data) {
@@ -17448,7 +17457,7 @@ function collectNetworkStats(statTime, timeInterval) {
 ///////////////////////////
 const diskStatsHistogram = [];
 function collectDiskStats(statTime, timeInterval) {
-    systeminformation_1.default.fsStats()
+    return systeminformation_1.default.fsStats()
         .then((data) => {
         let rxSec = data.rx_sec ? data.rx_sec : 0;
         let wxSec = data.wx_sec ? data.wx_sec : 0;
@@ -17464,53 +17473,75 @@ function collectDiskStats(statTime, timeInterval) {
     });
 }
 ///////////////////////////
-function collectStats() {
-    try {
-        if (!statCollectTime) {
+function collectStats(triggeredFromScheduler = true) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
             const currentTime = Date.now();
-            const timeSec = currentTime - (currentTime % 1000);
-            statCollectTime = timeSec;
+            const timeInterval = statCollectTime ? (currentTime - statCollectTime) : 0;
+            statCollectTime = currentTime;
+            const promises = [];
+            promises.push(collectNetworkStats(statCollectTime, timeInterval));
+            promises.push(collectDiskStats(statCollectTime, timeInterval));
+            return promises;
         }
-        else {
-            statCollectTime += STATS_FREQ;
-        }
-        collectNetworkStats(statCollectTime, STATS_FREQ);
-        collectDiskStats(statCollectTime, STATS_FREQ);
-    }
-    finally {
-        expectedScheduleTime += STATS_FREQ;
-        setTimeout(collectStats, expectedScheduleTime - Date.now());
-    }
-}
-function startHttpServer() {
-    const server = (0, http_1.createServer)((request, response) => {
-        switch (request.url) {
-            case '/network': {
-                if (request.method === 'GET') {
-                    response.end(JSON.stringify(networkStatsHistogram));
-                }
-                else {
-                    response.statusCode = 405;
-                    response.end();
-                }
-                break;
-            }
-            case '/disk': {
-                if (request.method === 'GET') {
-                    response.end(JSON.stringify(diskStatsHistogram));
-                }
-                else {
-                    response.statusCode = 405;
-                    response.end();
-                }
-                break;
-            }
-            default: {
-                response.statusCode = 404;
-                response.end();
+        finally {
+            if (triggeredFromScheduler) {
+                expectedScheduleTime += STATS_FREQ;
+                setTimeout(collectStats, expectedScheduleTime - Date.now());
             }
         }
     });
+}
+function startHttpServer() {
+    const server = (0, http_1.createServer)((request, response) => __awaiter(this, void 0, void 0, function* () {
+        try {
+            switch (request.url) {
+                case '/network': {
+                    if (request.method === 'GET') {
+                        response.end(JSON.stringify(networkStatsHistogram));
+                    }
+                    else {
+                        response.statusCode = 405;
+                        response.end();
+                    }
+                    break;
+                }
+                case '/disk': {
+                    if (request.method === 'GET') {
+                        response.end(JSON.stringify(diskStatsHistogram));
+                    }
+                    else {
+                        response.statusCode = 405;
+                        response.end();
+                    }
+                    break;
+                }
+                case '/collect': {
+                    if (request.method === 'POST') {
+                        yield collectStats(false);
+                        response.end();
+                    }
+                    else {
+                        response.statusCode = 405;
+                        response.end();
+                    }
+                    break;
+                }
+                default: {
+                    response.statusCode = 404;
+                    response.end();
+                }
+            }
+        }
+        catch (error) {
+            logger.error(error);
+            response.statusCode = 500;
+            response.end(JSON.stringify({
+                type: error.type,
+                message: error.message,
+            }));
+        }
+    }));
     server.listen(SERVER_PORT, SERVER_HOST, () => {
         logger.info(`Stat server listening on port ${SERVER_PORT}`);
     });
