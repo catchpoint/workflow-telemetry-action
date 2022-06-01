@@ -12,8 +12,9 @@ async function run(): Promise<void> {
     logger.info(`[WM] Finishing ...`)
 
     const { networkReadX, networkWriteX } = await getNetworkStats()
+    const { diskReadX, diskWriteX } = await getDiskStats()
 
-    const networkIORead = await getNetworkGraph({
+    const networkIORead = await getGraph({
       label: 'Network I/O Read (MB)',
       line: {
         label: 'Read',
@@ -22,12 +23,30 @@ async function run(): Promise<void> {
       }
     })
 
-    const networkIOWrite = await getNetworkGraph({
+    const networkIOWrite = await getGraph({
       label: 'Network I/O Write (MB)',
       line: {
         label: 'Write',
         color: '#6c25be',
         points: networkWriteX
+      }
+    })
+
+    const diskIORead = await getGraph({
+      label: 'Disk I/O Read (MB)',
+      line: {
+        label: 'Read',
+        color: '#be4d25',
+        points: diskReadX
+      }
+    })
+
+    const diskIOWrite = await getGraph({
+      label: 'Disk I/O Write (MB)',
+      line: {
+        label: 'Write',
+        color: '#6c25be',
+        points: diskWriteX
       }
     })
 
@@ -42,7 +61,7 @@ async function run(): Promise<void> {
           '|               | Read      | Write     |',
           '|---            |---        |---        |',
           `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
-          `| Disk I/O      | <>        | <>        |`
+          `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
         ].join('\n')
       })
     } else {
@@ -78,7 +97,30 @@ async function getNetworkStats(): Promise<any> {
   return { networkReadX, networkWriteX }
 }
 
-async function getNetworkGraph(options: any): Promise<any> {
+async function getDiskStats(): Promise<any> {
+  let diskReadX: any[] = []
+  let diskWriteX: any[] = []
+
+  logger.info('[WM] Get disk stats!')
+  const response = await axios.get('http://localhost:7777/disk')
+  logger.info(`[WM] Got Disk Data: ${JSON.stringify(response.data)}`)
+
+  response.data.forEach((element: any) => {
+    diskReadX.push({
+      x: element.time,
+      y: element.rxMb
+    })
+
+    diskWriteX.push({
+      x: element.time,
+      y: element.wxMb
+    })
+  })
+
+  return { diskReadX, diskWriteX }
+}
+
+async function getGraph(options: any): Promise<any> {
   const payload = {
     options: {
       width: 1000,

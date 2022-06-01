@@ -64472,7 +64472,8 @@ function run() {
         try {
             logger.info(`[WM] Finishing ...`);
             const { networkReadX, networkWriteX } = yield getNetworkStats();
-            const networkIORead = yield getNetworkGraph({
+            const { diskReadX, diskWriteX } = yield getDiskStats();
+            const networkIORead = yield getGraph({
                 label: 'Network I/O Read (MB)',
                 line: {
                     label: 'Read',
@@ -64480,12 +64481,28 @@ function run() {
                     points: networkReadX
                 }
             });
-            const networkIOWrite = yield getNetworkGraph({
+            const networkIOWrite = yield getGraph({
                 label: 'Network I/O Write (MB)',
                 line: {
                     label: 'Write',
                     color: '#6c25be',
                     points: networkWriteX
+                }
+            });
+            const diskIORead = yield getGraph({
+                label: 'Disk I/O Read (MB)',
+                line: {
+                    label: 'Read',
+                    color: '#be4d25',
+                    points: diskReadX
+                }
+            });
+            const diskIOWrite = yield getGraph({
+                label: 'Disk I/O Write (MB)',
+                line: {
+                    label: 'Write',
+                    color: '#6c25be',
+                    points: diskWriteX
                 }
             });
             const octokit = new action_1.Octokit();
@@ -64495,7 +64512,7 @@ function run() {
                         '|               | Read      | Write     |',
                         '|---            |---        |---        |',
                         `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
-                        `| Disk I/O      | <>        | <>        |`
+                        `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
                     ].join('\n') }));
             }
             else {
@@ -64528,7 +64545,27 @@ function getNetworkStats() {
         return { networkReadX, networkWriteX };
     });
 }
-function getNetworkGraph(options) {
+function getDiskStats() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let diskReadX = [];
+        let diskWriteX = [];
+        logger.info('[WM] Get disk stats!');
+        const response = yield axios_1.default.get('http://localhost:7777/disk');
+        logger.info(`[WM] Got Disk Data: ${JSON.stringify(response.data)}`);
+        response.data.forEach((element) => {
+            diskReadX.push({
+                x: element.time,
+                y: element.rxMb
+            });
+            diskWriteX.push({
+                x: element.time,
+                y: element.wxMb
+            });
+        });
+        return { diskReadX, diskWriteX };
+    });
+}
+function getGraph(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = {
             options: {
