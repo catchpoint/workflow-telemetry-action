@@ -131,15 +131,13 @@ function startHttpServer() {
 }
 
 function init() {
-  expectedScheduleTime = Date.now() + STATS_FREQ
+  expectedScheduleTime = Date.now()
 
   logger.info('Starting stat collector ...')
-  setTimeout(collectStats, STATS_FREQ)
+  process.nextTick(collectStats)
 
   logger.info('Starting HTTP server ...')
   startHttpServer()
 }
 
-const currentTime = Date.now()
-const nextSec = currentTime + 1000 - (currentTime % 1000)
-setTimeout(init, nextSec - currentTime - 1)
+init()
