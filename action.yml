@@ -1,6 +1,11 @@
 name: "Workflow Metrics"
 description: "Workflow Metrics"
 author: "Serkan Özal <serkanozal86@gmail.com>"
+inputs:
+  stat_frequency:
+    required: false
+    default: "5"
+    description: "Statistic Collection Frequency. Should be an Integer. Defaults to 5."
 runs:
   using: "node12"
   main: dist/main/index.js

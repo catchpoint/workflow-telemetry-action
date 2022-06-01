@@ -1948,6 +1948,60 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 636:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.error = exports.info = exports.debug = void 0;
+const core = __importStar(__webpack_require__(186));
+const LOG_HEADER = '[Foresight - Workflow Telemetry]';
+function debug(msg) {
+    core.debug(LOG_HEADER + ' ' + msg);
+}
+exports.debug = debug;
+function info(msg) {
+    core.debug(LOG_HEADER + ' ' + msg);
+}
+exports.info = info;
+function error(msg) {
+    if (msg instanceof String) {
+        core.error(LOG_HEADER + ' ' + msg);
+    }
+    else {
+        core.error(LOG_HEADER + ' ' + msg.name);
+        core.error(msg);
+    }
+}
+exports.error = error;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -1992,16 +2046,26 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
 const path_1 = __importDefault(__webpack_require__(622));
 const child_process_1 = __webpack_require__(129);
+const logger = __importStar(__webpack_require__(636));
+let statFrequency;
+const statFrequencyInput = core.getInput('stat_frequency');
+if (statFrequencyInput) {
+    const statFrequencyVal = parseInt(statFrequencyInput);
+    if (Number.isInteger(statFrequencyVal)) {
+        statFrequency = statFrequencyVal * 1000;
+    }
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            core.info(`[WM] Initialing ...`);
+            logger.info(`[WM] Initialing ...`);
             const child = (0, child_process_1.spawn)(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
                 detached: true,
-                stdio: 'ignore'
+                stdio: 'ignore',
+                env: Object.assign(Object.assign({}, process.env), { FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ: `${statFrequency}` })
             });
             child.unref();
-            core.info(`[WM] Initialization completed`);
+            logger.info(`[WM] Initialization completed`);
         }
         catch (error) {
             core.setFailed(error.message);
