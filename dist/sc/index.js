@@ -17357,13 +17357,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.error = exports.info = exports.debug = void 0;
 const core = __importStar(__webpack_require__(186));
-const LOG_HEADER = '[Foresight - Workflow Telemetry]';
+const LOG_HEADER = '[Workflow Telemetry]';
 function debug(msg) {
     core.debug(LOG_HEADER + ' ' + msg);
 }
 exports.debug = debug;
 function info(msg) {
-    core.debug(LOG_HEADER + ' ' + msg);
+    core.info(LOG_HEADER + ' ' + msg);
 }
 exports.info = info;
 function error(msg) {
@@ -17424,12 +17424,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const systeminformation_1 = __importDefault(__webpack_require__(284));
 const http_1 = __webpack_require__(605);
 const logger = __importStar(__webpack_require__(636));
-const STATS_FREQ = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000;
+const STATS_FREQ = parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000;
 const SERVER_HOST = 'localhost';
 // TODO
 // It is better to find an available/free port automatically and use it.
 // Then the post script (`post.ts`) needs to know the selected port.
-const SERVER_PORT = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777;
+const SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777;
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
 const networkStatsHistogram = [];

@@ -1,13 +1,13 @@
 import * as core from '@actions/core'
 
-const LOG_HEADER: string = '[Foresight - Workflow Telemetry]'
+const LOG_HEADER: string = '[Workflow Telemetry]'
 
 export function debug(msg: string) {
   core.debug(LOG_HEADER + ' ' + msg)
 }
 
 export function info(msg: string) {
-  core.debug(LOG_HEADER + ' ' + msg)
+  core.info(LOG_HEADER + ' ' + msg)
 }
 
 export function error(msg: string | Error) {

@@ -25,7 +25,7 @@ async function run(): Promise<void> {
         stdio: 'ignore',
         env: {
           ...process.env,
-          FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ: `${statFrequency}`
+          WORKFLOW_TELEMETRY_STAT_FREQ: `${statFrequency}`
         }
       }
     )

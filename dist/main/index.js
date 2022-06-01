@@ -1979,13 +1979,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.error = exports.info = exports.debug = void 0;
 const core = __importStar(__webpack_require__(186));
-const LOG_HEADER = '[Foresight - Workflow Telemetry]';
+const LOG_HEADER = '[Workflow Telemetry]';
 function debug(msg) {
     core.debug(LOG_HEADER + ' ' + msg);
 }
 exports.debug = debug;
 function info(msg) {
-    core.debug(LOG_HEADER + ' ' + msg);
+    core.info(LOG_HEADER + ' ' + msg);
 }
 exports.info = info;
 function error(msg) {
@@ -2062,7 +2062,7 @@ function run() {
             const child = (0, child_process_1.spawn)(process.argv[0], [path_1.default.join(__dirname, '../sc/index.js')], {
                 detached: true,
                 stdio: 'ignore',
-                env: Object.assign(Object.assign({}, process.env), { FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ: `${statFrequency}` })
+                env: Object.assign(Object.assign({}, process.env), { WORKFLOW_TELEMETRY_STAT_FREQ: `${statFrequency}` })
             });
             child.unref();
             logger.info(`Initialization completed`);

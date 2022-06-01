@@ -5,16 +5,15 @@ import axios from 'axios'
 
 import { Octokit } from '@octokit/action'
 
+const STAT_SERVER_PORT: number = 7777
+const PAGE_SIZE: number = 100
+
 const { pull_request } = github.context.payload
+const { repo, runId } = github.context
 
 async function run(): Promise<void> {
   try {
     logger.info(`Finishing ...`)
-
-    const octokit: Octokit = new Octokit()
-
-    const jobId: number = await getJobId(octokit)
-    logger.info(`Job id: ${jobId}`)
 
     // Trigger stat collect, so we will have remaining stats since the latest schedule
     await triggerStatCollect()
@@ -58,15 +57,18 @@ async function run(): Promise<void> {
       }
     })
 
-
     if (pull_request) {
       logger.info(`Found Pull Request: ${pull_request}`)
+      const octokit: Octokit = new Octokit()
+
+      const jobId: number = await getJobId(octokit)
+      logger.debug(`Current job id: ${jobId}`)
 
       await octokit.rest.issues.createComment({
         ...github.context.repo,
         issue_number: Number(github.context.payload.pull_request?.number),
         body: [
-          '## Foresight - Workflow Telemetry',
+          '## Workflow Telemetry',
           '',
           '|               | Read      | Write     |',
           '|---            |---        |---        |',
@@ -86,7 +88,7 @@ async function run(): Promise<void> {
 
 async function triggerStatCollect(): Promise<any> {
   logger.debug('Triggering stat collect ...')
-  const response = await axios.post('http://localhost:7777/collect')
+  const response = await axios.post(`http://localhost:${STAT_SERVER_PORT}/collect`)
   logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
 }
 
@@ -95,7 +97,7 @@ async function getNetworkStats(): Promise<any> {
   let networkWriteX: any[] = []
 
   logger.debug('Getting network stats ...')
-  const response = await axios.get('http://localhost:7777/network')
+  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/network`)
   logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
 
   response.data.forEach((element: any) => {
@@ -118,7 +120,7 @@ async function getDiskStats(): Promise<any> {
   let diskWriteX: any[] = []
 
   logger.debug('Getting disk stats ...')
-  const response = await axios.get('http://localhost:7777/disk')
+  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/disk`)
   logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`)
 
   response.data.forEach((element: any) => {
@@ -164,16 +166,29 @@ async function getGraph(options: any): Promise<any> {
 
 async function getJobId(octokit: Octokit): Promise<number>  {
   const getJobId = async() => {
-    const result = await octokit.rest.actions.listJobsForWorkflowRun({
-      owner: process.env.GITHUB_REPOSITORY_OWNER as string,
-      repo: (process.env.GITHUB_REPOSITORY as string).split('/')[1],
-      run_id: parseInt(process.env.GITHUB_RUN_ID as string, 10),
-      per_page: 100
-    });
-    const currentJobs = result.data.jobs
-            .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME)
-    if (currentJobs && currentJobs.length) {
-      return currentJobs[0].id
+    for (let page = 0; true; page++) {
+      const result = await octokit.rest.actions.listJobsForWorkflowRun({
+        owner: repo.owner,
+        repo: repo.repo,
+        run_id: runId,
+        per_page: PAGE_SIZE,
+        page
+      });
+      const jobs = result.data.jobs
+      // If there are no jobs, stop here
+      if (!jobs || !jobs.length) {
+        break
+      }
+      const currentJobs = jobs
+          .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME)
+      if (currentJobs && currentJobs.length) {
+        return currentJobs[0].id
+      }
+      // Since returning job count is less than page size, this means that there are no other jobs.
+      // So no need to make another request for the next page.
+      if (jobs.length < PAGE_SIZE) {
+        break
+      }
     }
     return null
   }

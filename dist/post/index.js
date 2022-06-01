@@ -64396,13 +64396,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.error = exports.info = exports.debug = void 0;
 const core = __importStar(__webpack_require__(2186));
-const LOG_HEADER = '[Foresight - Workflow Telemetry]';
+const LOG_HEADER = '[Workflow Telemetry]';
 function debug(msg) {
     core.debug(LOG_HEADER + ' ' + msg);
 }
 exports.debug = debug;
 function info(msg) {
-    core.debug(LOG_HEADER + ' ' + msg);
+    core.info(LOG_HEADER + ' ' + msg);
 }
 exports.info = info;
 function error(msg) {
@@ -64465,15 +64465,15 @@ const github = __importStar(__webpack_require__(5438));
 const logger = __importStar(__webpack_require__(4636));
 const axios_1 = __importDefault(__webpack_require__(6545));
 const action_1 = __webpack_require__(1231);
+const STAT_SERVER_PORT = 7777;
+const PAGE_SIZE = 100;
 const { pull_request } = github.context.payload;
+const { repo, runId } = github.context;
 function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             logger.info(`Finishing ...`);
-            const octokit = new action_1.Octokit();
-            const jobId = yield getJobId(octokit);
-            logger.info(`Job id: ${jobId}`);
             // Trigger stat collect, so we will have remaining stats since the latest schedule
             yield triggerStatCollect();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
@@ -64512,8 +64512,11 @@ function run() {
             });
             if (pull_request) {
                 logger.info(`Found Pull Request: ${pull_request}`);
+                const octokit = new action_1.Octokit();
+                const jobId = yield getJobId(octokit);
+                logger.debug(`Current job id: ${jobId}`);
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
-                        '## Foresight - Workflow Telemetry',
+                        '## Workflow Telemetry',
                         '',
                         '|               | Read      | Write     |',
                         '|---            |---        |---        |',
@@ -64534,7 +64537,7 @@ function run() {
 function triggerStatCollect() {
     return __awaiter(this, void 0, void 0, function* () {
         logger.debug('Triggering stat collect ...');
-        const response = yield axios_1.default.post('http://localhost:7777/collect');
+        const response = yield axios_1.default.post(`http://localhost:${STAT_SERVER_PORT}/collect`);
         logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
     });
 }
@@ -64543,7 +64546,7 @@ function getNetworkStats() {
         let networkReadX = [];
         let networkWriteX = [];
         logger.debug('Getting network stats ...');
-        const response = yield axios_1.default.get('http://localhost:7777/network');
+        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/network`);
         logger.debug(`Got network stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             networkReadX.push({
@@ -64563,7 +64566,7 @@ function getDiskStats() {
         let diskReadX = [];
         let diskWriteX = [];
         logger.debug('Getting disk stats ...');
-        const response = yield axios_1.default.get('http://localhost:7777/disk');
+        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/disk`);
         logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             diskReadX.push({
@@ -64603,16 +64606,29 @@ function getGraph(options) {
 function getJobId(octokit) {
     return __awaiter(this, void 0, void 0, function* () {
         const getJobId = () => __awaiter(this, void 0, void 0, function* () {
-            const result = yield octokit.rest.actions.listJobsForWorkflowRun({
-                owner: process.env.GITHUB_REPOSITORY_OWNER,
-                repo: process.env.GITHUB_REPOSITORY.split('/')[1],
-                run_id: parseInt(process.env.GITHUB_RUN_ID, 10),
-                per_page: 100
-            });
-            const currentJobs = result.data.jobs
-                .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME);
-            if (currentJobs && currentJobs.length) {
-                return currentJobs[0].id;
+            for (let page = 0; true; page++) {
+                const result = yield octokit.rest.actions.listJobsForWorkflowRun({
+                    owner: repo.owner,
+                    repo: repo.repo,
+                    run_id: runId,
+                    per_page: PAGE_SIZE,
+                    page
+                });
+                const jobs = result.data.jobs;
+                // If there are no jobs, stop here
+                if (!jobs || !jobs.length) {
+                    break;
+                }
+                const currentJobs = jobs
+                    .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME);
+                if (currentJobs && currentJobs.length) {
+                    return currentJobs[0].id;
+                }
+                // Since returning job count is less than page size, this means that there are no other jobs.
+                // So no need to make another request for the next page.
+                if (jobs.length < PAGE_SIZE) {
+                    break;
+                }
             }
             return null;
         });
