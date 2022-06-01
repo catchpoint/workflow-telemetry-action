@@ -58,6 +58,8 @@ async function run(): Promise<void> {
         ...github.context.repo,
         issue_number: Number(github.context.payload.pull_request?.number),
         body: [
+          '## Foresight - Workflow Telemetry',
+          '',
           '|               | Read      | Write     |',
           '|---            |---        |---        |',
           `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,

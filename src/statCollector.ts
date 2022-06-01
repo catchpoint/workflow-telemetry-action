@@ -2,7 +2,8 @@ import si from 'systeminformation'
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 import * as logger from './logger'
 
-const STATS_FREQ: number = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
+const STATS_FREQ: number =
+  parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
 const HOST: string = 'localhost'
 // TODO
 // It is better to find an available port and use it.

@@ -64509,6 +64509,8 @@ function run() {
             if (pull_request) {
                 logger.info(`[WM] Found Pull Request: ${pull_request}`);
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
+                        '## Foresight - Workflow Telemetry',
+                        '',
                         '|               | Read      | Write     |',
                         '|---            |---        |---        |',
                         `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
