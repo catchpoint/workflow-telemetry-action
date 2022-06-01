@@ -2,7 +2,7 @@ import si from 'systeminformation'
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 import * as logger from './logger'
 
-const STATS_FREQ: number = 5000
+const STATS_FREQ: number = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
 const HOST: string = 'localhost'
 // TODO
 // It is better to find an available port and use it.
@@ -60,8 +60,8 @@ interface DiskStats {
 function collectDiskStats(statTime: number, timeInterval: number) {
   si.fsStats()
     .then((data: si.Systeminformation.FsStatsData) => {
-      let rxSec = data.rx_sec ? data.rx_sec : 0;
-      let wxSec = data.wx_sec ? data.wx_sec : 0;
+      let rxSec = data.rx_sec ? data.rx_sec : 0
+      let wxSec = data.wx_sec ? data.wx_sec : 0
       const diskStats: DiskStats = {
         time: statTime,
         rxMb: Math.floor((rxSec * (timeInterval / 1000)) / 1024 / 1024),
@@ -88,8 +88,8 @@ function collectStats() {
     collectNetworkStats(statCollectTime, STATS_FREQ)
     collectDiskStats(statCollectTime, STATS_FREQ)
   } finally {
-    expectedScheduleTime += STATS_FREQ;
-    setTimeout(collectStats, expectedScheduleTime - Date.now());
+    expectedScheduleTime += STATS_FREQ
+    setTimeout(collectStats, expectedScheduleTime - Date.now())
   }
 }
 
@@ -138,6 +138,6 @@ function init() {
   startHttpServer()
 }
 
-const currentTime = Date.now();
-const nextSec = currentTime + 1000 - (currentTime % 1000);
-setTimeout(init, nextSec - currentTime - 1);
+const currentTime = Date.now()
+const nextSec = currentTime + 1000 - (currentTime % 1000)
+setTimeout(init, nextSec - currentTime - 1)

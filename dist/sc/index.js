@@ -17415,7 +17415,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const systeminformation_1 = __importDefault(__webpack_require__(284));
 const http_1 = __webpack_require__(605);
 const logger = __importStar(__webpack_require__(636));
-const STATS_FREQ = 5000;
+const STATS_FREQ = parseInt(process.env.FORESIGHT_WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000;
 const HOST = 'localhost';
 // TODO
 // It is better to find an available port and use it.
