@@ -129,10 +129,10 @@ function startHttpServer() {
 }
 
 function init() {
-  expectedScheduleTime = Date.now() + STATS_FREQ;
+  expectedScheduleTime = Date.now() + STATS_FREQ
 
   logger.info('Starting stat collector ...')
-  setTimeout(collectStats, STATS_FREQ);
+  setTimeout(collectStats, STATS_FREQ)
 
   logger.info('Starting HTTP server ...')
   startHttpServer()

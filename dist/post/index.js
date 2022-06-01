@@ -64365,6 +64365,60 @@ XRegExp = XRegExp || (function (undef) {
 
 /***/ }),
 
+/***/ 4636:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.error = exports.info = exports.debug = void 0;
+const core = __importStar(__webpack_require__(2186));
+const LOG_HEADER = '[Foresight - Workflow Telemetry]';
+function debug(msg) {
+    core.debug(LOG_HEADER + ' ' + msg);
+}
+exports.debug = debug;
+function info(msg) {
+    core.debug(LOG_HEADER + ' ' + msg);
+}
+exports.info = info;
+function error(msg) {
+    if (msg instanceof String) {
+        core.error(LOG_HEADER + ' ' + msg);
+    }
+    else {
+        core.error(LOG_HEADER + ' ' + msg.name);
+        core.error(msg);
+    }
+}
+exports.error = error;
+
+
+/***/ }),
+
 /***/ 7051:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -64408,6 +64462,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(2186));
 const github = __importStar(__webpack_require__(5438));
+const logger = __importStar(__webpack_require__(4636));
 const axios_1 = __importDefault(__webpack_require__(6545));
 const action_1 = __webpack_require__(1231);
 const { pull_request } = github.context.payload;
@@ -64415,18 +64470,55 @@ function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            core.info(`[WM] Finishing ...`);
-            const rawNetworkData = yield getNetworkStats();
-            const { id, url } = yield getNetworkGraph(rawNetworkData.data);
+            logger.info(`[WM] Finishing ...`);
+            const { networkReadX, networkWriteX } = yield getNetworkStats();
+            const { diskReadX, diskWriteX } = yield getDiskStats();
+            const networkIORead = yield getGraph({
+                label: 'Network I/O Read (MB)',
+                line: {
+                    label: 'Read',
+                    color: '#be4d25',
+                    points: networkReadX
+                }
+            });
+            const networkIOWrite = yield getGraph({
+                label: 'Network I/O Write (MB)',
+                line: {
+                    label: 'Write',
+                    color: '#6c25be',
+                    points: networkWriteX
+                }
+            });
+            const diskIORead = yield getGraph({
+                label: 'Disk I/O Read (MB)',
+                line: {
+                    label: 'Read',
+                    color: '#be4d25',
+                    points: diskReadX
+                }
+            });
+            const diskIOWrite = yield getGraph({
+                label: 'Disk I/O Write (MB)',
+                line: {
+                    label: 'Write',
+                    color: '#6c25be',
+                    points: diskWriteX
+                }
+            });
             const octokit = new action_1.Octokit();
             if (pull_request) {
-                core.info(`[WM] Found Pull Request: ${pull_request}`);
-                yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: `![${id}](${url})` }));
+                logger.info(`[WM] Found Pull Request: ${pull_request}`);
+                yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
+                        '|               | Read      | Write     |',
+                        '|---            |---        |---        |',
+                        `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
+                        `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
+                    ].join('\n') }));
             }
             else {
-                core.info(`[WM] Couldn't Find Pull Request`);
+                logger.info(`[WM] Couldn't Find Pull Request`);
             }
-            core.info(`[WM] Finish completed`);
+            logger.info(`[WM] Finish completed`);
         }
         catch (error) {
             core.setFailed(error.message);
@@ -64435,52 +64527,61 @@ function run() {
 }
 function getNetworkStats() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info('[WM] Get network stats!');
+        let networkReadX = [];
+        let networkWriteX = [];
+        logger.info('[WM] Get network stats!');
         const response = yield axios_1.default.get('http://localhost:7777/network');
-        core.info(`[WM] Got Network Data: ${JSON.stringify(response.data)}`);
-        return response;
-    });
-}
-function getNetworkGraph(rawData) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let readX = [];
-        let writeX = [];
-        rawData.forEach((element) => {
-            readX.push({
-                "x": element.time,
-                "y": element.rxKb
+        logger.info(`[WM] Got Network Data: ${JSON.stringify(response.data)}`);
+        response.data.forEach((element) => {
+            networkReadX.push({
+                x: element.time,
+                y: element.rxMb
             });
-            writeX.push({
-                "x": element.time,
-                "y": element.txKb
+            networkWriteX.push({
+                x: element.time,
+                y: element.txMb
             });
         });
+        return { networkReadX, networkWriteX };
+    });
+}
+function getDiskStats() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let diskReadX = [];
+        let diskWriteX = [];
+        logger.info('[WM] Get disk stats!');
+        const response = yield axios_1.default.get('http://localhost:7777/disk');
+        logger.info(`[WM] Got Disk Data: ${JSON.stringify(response.data)}`);
+        response.data.forEach((element) => {
+            diskReadX.push({
+                x: element.time,
+                y: element.rxMb
+            });
+            diskWriteX.push({
+                x: element.time,
+                y: element.wxMb
+            });
+        });
+        return { diskReadX, diskWriteX };
+    });
+}
+function getGraph(options) {
+    return __awaiter(this, void 0, void 0, function* () {
         const payload = {
-            "options": {
-                "width": 1000,
-                "height": 500,
-                "xAxis": {
-                    "label": "Time"
+            options: {
+                width: 1000,
+                height: 500,
+                xAxis: {
+                    label: 'Time'
                 },
-                "yAxis": {
-                    "label": "Network I/O (KB)"
+                yAxis: {
+                    label: options.label
                 },
-                "timeTicks": {
-                    "unit": "auto"
+                timeTicks: {
+                    unit: 'auto'
                 }
             },
-            "lines": [
-                {
-                    "label": "Read",
-                    "color": "#be4d25",
-                    "points": readX
-                },
-                {
-                    "label": "Write",
-                    "color": "#6c25be",
-                    "points": writeX
-                }
-            ]
+            lines: [options.line]
         };
         const response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/line/time', payload);
         return response.data;
