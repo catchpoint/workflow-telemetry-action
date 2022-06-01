@@ -64515,6 +64515,8 @@ function run() {
                 const octokit = new action_1.Octokit();
                 const jobId = yield getJobId(octokit);
                 logger.debug(`Current job id: ${jobId}`);
+                const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobId}?check_suite_focus=true`;
+                logger.debug(`Current job url: ${jobUrl}`);
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
                         '## Workflow Telemetry',
                         '',

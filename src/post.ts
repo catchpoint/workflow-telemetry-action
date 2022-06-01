@@ -64,6 +64,9 @@ async function run(): Promise<void> {
       const jobId: number = await getJobId(octokit)
       logger.debug(`Current job id: ${jobId}`)
 
+      const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobId}?check_suite_focus=true`
+      logger.debug(`Current job url: ${jobUrl}`)
+
       await octokit.rest.issues.createComment({
         ...github.context.repo,
         issue_number: Number(github.context.payload.pull_request?.number),
