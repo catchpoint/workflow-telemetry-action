@@ -1,0 +1,16 @@
+name: "Workflow Telemetry"
+description: "Workflow Telemetry"
+author: "Serkan Özal <serkan@thundra.io>"
+inputs:
+  github_token:
+    description: "GitHub API Access Token"
+    default: ${{ github.token }}
+    required: false
+  stat_frequency:
+    description: "Statistic Collection Frequency. Should be an Integer. Defaults to 5."
+    default: 5
+    required: false
+runs:
+  using: "node12"
+  main: dist/main/index.js
+  post: dist/post/index.js

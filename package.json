@@ -1,0 +1,48 @@
+{
+  "name": "workflow-metrics-action",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Workflow Metrics Action",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "package:main": "ncc build --source-map src/main.ts --out dist/main",
+    "package:post": "ncc build --source-map src/post.ts --out dist/post",
+    "package:statCollector": "ncc build --source-map src/statCollector.ts --out dist/sc",
+    "package": "npm run package:main && npm run package:post && npm run package:statCollector",
+    "test": "echo \"Warn: no test specified\" && exit 0",
+    "all": "npm run build && npm run package && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serkan-ozal/workflow-metrics-action.git"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "setup"
+  ],
+  "author": "Serkan Özal <serkanozal86@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@actions/exec": "^1.1.0",
+    "@actions/github": "^5.0.3",
+    "@octokit/action": "^3.18.1",
+    "axios": "^0.27.2",
+    "systeminformation": "^5.11.15"
+  },
+  "devDependencies": {
+    "@types/node": "^16.3.3",
+    "@typescript-eslint/parser": "^4.28.3",
+    "@vercel/ncc": "^0.25.1",
+    "eslint": "^7.31.0",
+    "eslint-plugin-github": "^4.1.1",
+    "js-yaml": "^4.1.0",
+    "prettier": "2.2.1",
+    "typescript": "^4.1.3"
+  }
+}
