@@ -64514,7 +64514,8 @@ function run() {
                 logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
                 const octokit = new action_1.Octokit();
                 logger.debug(`Workflow - Job: ${workflow} - ${job}`);
-                logger.debug(`Commit: ${sha}`);
+                const commit = (pull_request.head && pull_request.head.sha) || sha;
+                logger.debug(`Commit: ${commit}`);
                 const jobInfo = yield getJobInfo(octokit);
                 logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
                 let title = `## Workflow Telemetry - ${workflow}`;
@@ -64524,7 +64525,7 @@ function run() {
                 else {
                     title = `${title} / ${job}`;
                 }
-                let info = `Workflow telemetry for commit ${sha}`;
+                let info = `Workflow telemetry for commit ${commit}`;
                 if (jobInfo.id) {
                     const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`;
                     logger.debug(`Job url: ${jobUrl}`);
