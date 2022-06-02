@@ -64511,7 +64511,7 @@ function run() {
                 }
             });
             if (pull_request) {
-                logger.info(`Found Pull Request: ${JSON.stringify(pull_request)}`);
+                logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
                 const octokit = new action_1.Octokit();
                 logger.debug(`Workflow - Job: ${workflow} - ${job}`);
                 logger.debug(`Commit: ${sha}`);

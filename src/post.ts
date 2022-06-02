@@ -68,7 +68,7 @@ async function run(): Promise<void> {
     })
 
     if (pull_request) {
-      logger.info(`Found Pull Request: ${JSON.stringify(pull_request)}`)
+      logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`)
 
       const octokit: Octokit = new Octokit()
 
