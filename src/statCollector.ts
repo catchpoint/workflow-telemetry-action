@@ -2,6 +2,8 @@ import si from 'systeminformation'
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 import * as logger from './logger'
 
+import { DiskStats, NetworkStats } from './interfaces'
+
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
 const SERVER_HOST: string = 'localhost'
@@ -17,18 +19,17 @@ let statCollectTime: number = 0
 // Network Stats         //
 ///////////////////////////
 
-interface NetworkStats {
-  readonly time: number
-  readonly rxMb: number
-  readonly txMb: number
-}
-
 const networkStatsHistogram: NetworkStats[] = []
 
-function collectNetworkStats(statTime: number, timeInterval: number): Promise<any> {
-  return si.networkStats()
+function collectNetworkStats(
+  statTime: number,
+  timeInterval: number
+): Promise<any> {
+  return si
+    .networkStats()
     .then((data: si.Systeminformation.NetworkStatsData[]) => {
-      let totalRxSec = 0, totalTxSec = 0
+      let totalRxSec = 0,
+        totalTxSec = 0
       for (let nsd of data) {
         totalRxSec += nsd.rx_sec
         totalTxSec += nsd.tx_sec
@@ -52,14 +53,12 @@ function collectNetworkStats(statTime: number, timeInterval: number): Promise<an
 
 const diskStatsHistogram: DiskStats[] = []
 
-interface DiskStats {
-  readonly time: number
-  readonly rxMb: number
-  readonly wxMb: number
-}
-
-function collectDiskStats(statTime: number, timeInterval: number): Promise<any> {
-  return si.fsStats()
+function collectDiskStats(
+  statTime: number,
+  timeInterval: number
+): Promise<any> {
+  return si
+    .fsStats()
     .then((data: si.Systeminformation.FsStatsData) => {
       let rxSec = data.rx_sec ? data.rx_sec : 0
       let wxSec = data.wx_sec ? data.wx_sec : 0
@@ -80,7 +79,9 @@ function collectDiskStats(statTime: number, timeInterval: number): Promise<any> 
 async function collectStats(triggeredFromScheduler: boolean = true) {
   try {
     const currentTime: number = Date.now()
-    const timeInterval: number = statCollectTime ? (currentTime - statCollectTime) : 0
+    const timeInterval: number = statCollectTime
+      ? currentTime - statCollectTime
+      : 0
 
     statCollectTime = currentTime
 
@@ -100,7 +101,7 @@ async function collectStats(triggeredFromScheduler: boolean = true) {
 
 function startHttpServer() {
   const server: Server = createServer(
-    async(request: IncomingMessage, response: ServerResponse) => {
+    async (request: IncomingMessage, response: ServerResponse) => {
       try {
         switch (request.url) {
           case '/network': {
@@ -139,10 +140,12 @@ function startHttpServer() {
       } catch (error: any) {
         logger.error(error)
         response.statusCode = 500
-        response.end(JSON.stringify({
-          type: error.type,
-          message: error.message,
-        }))
+        response.end(
+          JSON.stringify({
+            type: error.type,
+            message: error.message
+          })
+        )
       }
     }
   )

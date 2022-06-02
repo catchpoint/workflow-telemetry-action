@@ -64513,7 +64513,7 @@ function run() {
             if (pull_request) {
                 logger.info(`Found Pull Request: ${JSON.stringify(pull_request)}`);
                 const octokit = new action_1.Octokit();
-                logger.debug(`Workflow - job: ${workflow} - ${job}`);
+                logger.debug(`Workflow - Job: ${workflow} - ${job}`);
                 logger.debug(`Commit: ${sha}`);
                 const jobInfo = yield getJobInfo(octokit);
                 logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
@@ -64636,8 +64636,8 @@ function getJobInfo(octokit) {
                 if (!jobs || !jobs.length) {
                     break;
                 }
-                const currentJobs = jobs
-                    .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME);
+                const currentJobs = jobs.filter(it => it.status === 'in_progress' &&
+                    it.runner_name === process.env.RUNNER_NAME);
                 if (currentJobs && currentJobs.length) {
                     return {
                         id: currentJobs[0].id,

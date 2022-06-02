@@ -17432,9 +17432,12 @@ const SERVER_HOST = 'localhost';
 const SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777;
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
+// Network Stats         //
+///////////////////////////
 const networkStatsHistogram = [];
 function collectNetworkStats(statTime, timeInterval) {
-    return systeminformation_1.default.networkStats()
+    return systeminformation_1.default
+        .networkStats()
         .then((data) => {
         let totalRxSec = 0, totalTxSec = 0;
         for (let nsd of data) {
@@ -17457,7 +17460,8 @@ function collectNetworkStats(statTime, timeInterval) {
 ///////////////////////////
 const diskStatsHistogram = [];
 function collectDiskStats(statTime, timeInterval) {
-    return systeminformation_1.default.fsStats()
+    return systeminformation_1.default
+        .fsStats()
         .then((data) => {
         let rxSec = data.rx_sec ? data.rx_sec : 0;
         let wxSec = data.wx_sec ? data.wx_sec : 0;
@@ -17477,7 +17481,9 @@ function collectStats(triggeredFromScheduler = true) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const currentTime = Date.now();
-            const timeInterval = statCollectTime ? (currentTime - statCollectTime) : 0;
+            const timeInterval = statCollectTime
+                ? currentTime - statCollectTime
+                : 0;
             statCollectTime = currentTime;
             const promises = [];
             promises.push(collectNetworkStats(statCollectTime, timeInterval));
@@ -17538,7 +17544,7 @@ function startHttpServer() {
             response.statusCode = 500;
             response.end(JSON.stringify({
                 type: error.type,
-                message: error.message,
+                message: error.message
             }));
         }
     }));

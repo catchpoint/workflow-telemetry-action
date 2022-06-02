@@ -4,6 +4,16 @@ import * as logger from './logger'
 import axios from 'axios'
 
 import { Octokit } from '@octokit/action'
+import {
+  JobInfo,
+  GraphOptions,
+  GraphResponse,
+  ProcessedStats,
+  DiskStats,
+  ProcessedDiskStats,
+  NetworkStats,
+  ProcessedNetworkStats
+} from './interfaces'
 
 const STAT_SERVER_PORT: number = 7777
 const PAGE_SIZE: number = 100
@@ -62,7 +72,7 @@ async function run(): Promise<void> {
 
       const octokit: Octokit = new Octokit()
 
-      logger.debug(`Workflow - job: ${workflow} - ${job}`)
+      logger.debug(`Workflow - Job: ${workflow} - ${job}`)
 
       logger.debug(`Commit: ${sha}`)
 
@@ -107,21 +117,25 @@ async function run(): Promise<void> {
   }
 }
 
-async function triggerStatCollect(): Promise<any> {
+async function triggerStatCollect(): Promise<void> {
   logger.debug('Triggering stat collect ...')
-  const response = await axios.post(`http://localhost:${STAT_SERVER_PORT}/collect`)
+  const response = await axios.post(
+    `http://localhost:${STAT_SERVER_PORT}/collect`
+  )
   logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
 }
 
-async function getNetworkStats(): Promise<any> {
-  let networkReadX: any[] = []
-  let networkWriteX: any[] = []
+async function getNetworkStats(): Promise<ProcessedNetworkStats> {
+  let networkReadX: ProcessedStats[] = []
+  let networkWriteX: ProcessedStats[] = []
 
   logger.debug('Getting network stats ...')
-  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/network`)
+  const response = await axios.get(
+    `http://localhost:${STAT_SERVER_PORT}/network`
+  )
   logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
 
-  response.data.forEach((element: any) => {
+  response.data.forEach((element: NetworkStats) => {
     networkReadX.push({
       x: element.time,
       y: element.rxMb
@@ -136,15 +150,15 @@ async function getNetworkStats(): Promise<any> {
   return { networkReadX, networkWriteX }
 }
 
-async function getDiskStats(): Promise<any> {
-  let diskReadX: any[] = []
-  let diskWriteX: any[] = []
+async function getDiskStats(): Promise<ProcessedDiskStats> {
+  let diskReadX: ProcessedStats[] = []
+  let diskWriteX: ProcessedStats[] = []
 
   logger.debug('Getting disk stats ...')
   const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/disk`)
   logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`)
 
-  response.data.forEach((element: any) => {
+  response.data.forEach((element: DiskStats) => {
     diskReadX.push({
       x: element.time,
       y: element.rxMb
@@ -159,7 +173,7 @@ async function getDiskStats(): Promise<any> {
   return { diskReadX, diskWriteX }
 }
 
-async function getGraph(options: any): Promise<any> {
+async function getGraph(options: GraphOptions): Promise<GraphResponse> {
   const payload = {
     options: {
       width: 1000,
@@ -185,13 +199,8 @@ async function getGraph(options: any): Promise<any> {
   return response.data
 }
 
-interface JobInfo {
-  readonly id?: number
-  readonly name?: string
-}
-
-async function getJobInfo(octokit: Octokit): Promise<JobInfo>  {
-  const _getJobInfo = async(): Promise<JobInfo> => {
+async function getJobInfo(octokit: Octokit): Promise<JobInfo> {
+  const _getJobInfo = async (): Promise<JobInfo> => {
     for (let page = 0; true; page++) {
       const result = await octokit.rest.actions.listJobsForWorkflowRun({
         owner: repo.owner,
@@ -205,8 +214,11 @@ async function getJobInfo(octokit: Octokit): Promise<JobInfo>  {
       if (!jobs || !jobs.length) {
         break
       }
-      const currentJobs = jobs
-          .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME)
+      const currentJobs = jobs.filter(
+        it =>
+          it.status === 'in_progress' &&
+          it.runner_name === process.env.RUNNER_NAME
+      )
       if (currentJobs && currentJobs.length) {
         return {
           id: currentJobs[0].id,
