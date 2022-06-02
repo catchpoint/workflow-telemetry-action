@@ -65,11 +65,13 @@ async function run(): Promise<void> {
 
       logger.debug(`Commit: ${sha}`)
 
-      const jobId: number = await getJobId(octokit)
-      logger.debug(`Job id: ${jobId}`)
+      const jobInfo: JobInfo = await getJobInfo(octokit)
+      logger.debug(`Job info: ${JSON.stringify(jobInfo)}`)
 
-      const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobId}?check_suite_focus=true`
-      logger.debug(`Job url: ${jobUrl}`)
+      if (jobInfo.id) {
+        const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`
+        logger.debug(`Job url: ${jobUrl}`)
+      }
 
       await octokit.rest.issues.createComment({
         ...github.context.repo,
@@ -171,8 +173,13 @@ async function getGraph(options: any): Promise<any> {
   return response.data
 }
 
-async function getJobId(octokit: Octokit): Promise<number>  {
-  const getJobId = async() => {
+interface JobInfo {
+  readonly id?: number
+  readonly name?: string
+}
+
+async function getJobInfo(octokit: Octokit): Promise<JobInfo>  {
+  const _getJobInfo = async(): Promise<JobInfo> => {
     for (let page = 0; true; page++) {
       const result = await octokit.rest.actions.listJobsForWorkflowRun({
         owner: repo.owner,
@@ -189,7 +196,10 @@ async function getJobId(octokit: Octokit): Promise<number>  {
       const currentJobs = jobs
           .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME)
       if (currentJobs && currentJobs.length) {
-        return currentJobs[0].id
+        return {
+          id: currentJobs[0].id,
+          name: currentJobs[0].name
+        }
       }
       // Since returning job count is less than page size, this means that there are no other jobs.
       // So no need to make another request for the next page.
@@ -197,16 +207,16 @@ async function getJobId(octokit: Octokit): Promise<number>  {
         break
       }
     }
-    return null
+    return {}
   }
   for (let i = 0; i < 10; i++) {
-    const currentJobId = await getJobId()
-    if (currentJobId) {
-      return currentJobId
+    const currentJobInfo = await _getJobInfo()
+    if (currentJobInfo && currentJobInfo.id) {
+      return currentJobInfo
     }
     await new Promise(r => setTimeout(r, 1000))
   }
-  return -1
+  return {}
 }
 
 run()

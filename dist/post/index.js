@@ -64468,7 +64468,7 @@ const action_1 = __webpack_require__(1231);
 const STAT_SERVER_PORT = 7777;
 const PAGE_SIZE = 100;
 const { pull_request } = github.context.payload;
-const { repo, runId } = github.context;
+const { workflow, job, repo, runId, sha } = github.context;
 function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
@@ -64511,12 +64511,16 @@ function run() {
                 }
             });
             if (pull_request) {
-                logger.info(`Found Pull Request: ${pull_request}`);
+                logger.info(`Found Pull Request: ${JSON.stringify(pull_request)}`);
                 const octokit = new action_1.Octokit();
-                const jobId = yield getJobId(octokit);
-                logger.debug(`Current job id: ${jobId}`);
-                const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobId}?check_suite_focus=true`;
-                logger.debug(`Current job url: ${jobUrl}`);
+                logger.debug(`Workflow - job: ${workflow} - ${job}`);
+                logger.debug(`Commit: ${sha}`);
+                const jobInfo = yield getJobInfo(octokit);
+                logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
+                if (jobInfo.id) {
+                    const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`;
+                    logger.debug(`Job url: ${jobUrl}`);
+                }
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
                         '## Workflow Telemetry',
                         '',
@@ -64605,9 +64609,9 @@ function getGraph(options) {
         return response.data;
     });
 }
-function getJobId(octokit) {
+function getJobInfo(octokit) {
     return __awaiter(this, void 0, void 0, function* () {
-        const getJobId = () => __awaiter(this, void 0, void 0, function* () {
+        const _getJobInfo = () => __awaiter(this, void 0, void 0, function* () {
             for (let page = 0; true; page++) {
                 const result = yield octokit.rest.actions.listJobsForWorkflowRun({
                     owner: repo.owner,
@@ -64624,7 +64628,10 @@ function getJobId(octokit) {
                 const currentJobs = jobs
                     .filter(it => it.status === 'in_progress' && it.runner_name === process.env.RUNNER_NAME);
                 if (currentJobs && currentJobs.length) {
-                    return currentJobs[0].id;
+                    return {
+                        id: currentJobs[0].id,
+                        name: currentJobs[0].name
+                    };
                 }
                 // Since returning job count is less than page size, this means that there are no other jobs.
                 // So no need to make another request for the next page.
@@ -64632,16 +64639,16 @@ function getJobId(octokit) {
                     break;
                 }
             }
-            return null;
+            return {};
         });
         for (let i = 0; i < 10; i++) {
-            const currentJobId = yield getJobId();
-            if (currentJobId) {
-                return currentJobId;
+            const currentJobInfo = yield _getJobInfo();
+            if (currentJobInfo && currentJobInfo.id) {
+                return currentJobInfo;
             }
             yield new Promise(r => setTimeout(r, 1000));
         }
-        return -1;
+        return {};
     });
 }
 run();
