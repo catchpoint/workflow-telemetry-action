@@ -9,7 +9,7 @@ const STAT_SERVER_PORT: number = 7777
 const PAGE_SIZE: number = 100
 
 const { pull_request } = github.context.payload
-const { repo, runId } = github.context
+const { workflow, job, repo, runId, sha } = github.context
 
 async function run(): Promise<void> {
   try {
@@ -58,14 +58,18 @@ async function run(): Promise<void> {
     })
 
     if (pull_request) {
-      logger.info(`Found Pull Request: ${pull_request}`)
+      logger.info(`Found Pull Request: ${JSON.stringify(pull_request)}`)
       const octokit: Octokit = new Octokit()
 
+      logger.debug(`Workflow - job: ${workflow} - ${job}`)
+
+      logger.debug(`Commit: ${sha}`)
+
       const jobId: number = await getJobId(octokit)
-      logger.debug(`Current job id: ${jobId}`)
+      logger.debug(`Job id: ${jobId}`)
 
       const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobId}?check_suite_focus=true`
-      logger.debug(`Current job url: ${jobUrl}`)
+      logger.debug(`Job url: ${jobUrl}`)
 
       await octokit.rest.issues.createComment({
         ...github.context.repo,
@@ -176,7 +180,7 @@ async function getJobId(octokit: Octokit): Promise<number>  {
         run_id: runId,
         per_page: PAGE_SIZE,
         page
-      });
+      })
       const jobs = result.data.jobs
       // If there are no jobs, stop here
       if (!jobs || !jobs.length) {
