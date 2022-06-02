@@ -59,6 +59,7 @@ async function run(): Promise<void> {
 
     if (pull_request) {
       logger.info(`Found Pull Request: ${JSON.stringify(pull_request)}`)
+
       const octokit: Octokit = new Octokit()
 
       logger.debug(`Workflow - job: ${workflow} - ${job}`)
@@ -68,16 +69,27 @@ async function run(): Promise<void> {
       const jobInfo: JobInfo = await getJobInfo(octokit)
       logger.debug(`Job info: ${JSON.stringify(jobInfo)}`)
 
+      let title = `## Workflow Telemetry - ${workflow}`
+      if (jobInfo.name) {
+        title = `${title} / ${jobInfo.name}`
+      } else {
+        title = `${title} / ${job}`
+      }
+
+      let info = `Workflow telemetry for commit ${sha}`
       if (jobInfo.id) {
         const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`
         logger.debug(`Job url: ${jobUrl}`)
+        info = `${info}\nYou can access workflow job details [here](${jobUrl})`
       }
 
       await octokit.rest.issues.createComment({
         ...github.context.repo,
         issue_number: Number(github.context.payload.pull_request?.number),
         body: [
-          '## Workflow Telemetry',
+          title,
+          '',
+          info,
           '',
           '|               | Read      | Write     |',
           '|---            |---        |---        |',

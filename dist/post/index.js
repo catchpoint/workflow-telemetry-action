@@ -64517,12 +64517,23 @@ function run() {
                 logger.debug(`Commit: ${sha}`);
                 const jobInfo = yield getJobInfo(octokit);
                 logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
+                let title = `## Workflow Telemetry - ${workflow}`;
+                if (jobInfo.name) {
+                    title = `${title} / ${jobInfo.name}`;
+                }
+                else {
+                    title = `${title} / ${job}`;
+                }
+                let info = `Workflow telemetry for commit ${sha}`;
                 if (jobInfo.id) {
                     const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`;
                     logger.debug(`Job url: ${jobUrl}`);
+                    info = `${info}\nYou can access workflow job details [here](${jobUrl})`;
                 }
                 yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
-                        '## Workflow Telemetry',
+                        title,
+                        '',
+                        info,
                         '',
                         '|               | Read      | Write     |',
                         '|---            |---        |---        |',
