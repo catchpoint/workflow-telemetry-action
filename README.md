@@ -1,6 +1,10 @@
 # workflow-telemetry-action
 
-A GitHub Action to track and monitor the resource metrics of your GitHub Action workflow runs. The action will track Network I/O and Disk I/O at the moment. If the run is triggered via a Pull Request, it will create a comment on the connected PR with the results.
+A GitHub Action to track and monitor the resource metrics of your GitHub Action workflow runs. If the run is triggered via a Pull Request, it will create a comment on the connected PR with the results. The action collects the following metrics:
+
+- CPU Load (user and system) in percentage
+- Network I/O (read and write) in MB
+- Disk I/O (read and write) in MB
 
 ### Example Output
 
