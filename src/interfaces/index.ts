@@ -10,6 +10,13 @@ export interface CPUStats {
     readonly systemLoad: number
 }
 
+export interface MemoryStats {
+    readonly time: number
+    readonly totalMemoryMb: number
+    readonly activeMemoryMb: number
+    readonly availableMemoryMb: number
+}
+
 export interface NetworkStats {
     readonly time: number
     readonly rxMb: number
@@ -30,6 +37,11 @@ export interface ProcessedStats {
 export interface ProcessedCPUStats {
     readonly userLoadX: ProcessedStats[],
     readonly systemLoadX: ProcessedStats[],
+}
+
+export interface ProcessedMemoryStats {
+    readonly activeMemoryX: ProcessedStats[],
+    readonly availableMemoryX: ProcessedStats[],
 }
 
 export interface ProcessedNetworkStats {

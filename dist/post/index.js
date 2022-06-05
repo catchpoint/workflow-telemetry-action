@@ -64477,6 +64477,7 @@ function run() {
             // Trigger stat collect, so we will have remaining stats since the latest schedule
             yield triggerStatCollect();
             const { userLoadX, systemLoadX } = yield getCPUStats();
+            const { activeMemoryX, availableMemoryX } = yield getMemoryStats();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
             const { diskReadX, diskWriteX } = yield getDiskStats();
             const cpuLoad = yield getStackedAreaGraph({
@@ -64484,13 +64485,28 @@ function run() {
                 areas: [
                     {
                         label: 'User Load',
-                        color: '#e41a1c',
+                        color: '#e41a1c99',
                         points: userLoadX
                     },
                     {
                         label: 'System Load',
-                        color: '#ff7f00',
+                        color: '#ff7f0099',
                         points: systemLoadX
+                    }
+                ]
+            });
+            const memoryUsage = yield getStackedAreaGraph({
+                label: 'Memory Usage (MB)',
+                areas: [
+                    {
+                        label: 'Used',
+                        color: '#377eb899',
+                        points: activeMemoryX
+                    },
+                    {
+                        label: 'Free',
+                        color: '#4daf4a99',
+                        points: availableMemoryX
                     }
                 ]
             });
@@ -64555,6 +64571,9 @@ function run() {
                         '### CPU Metrics',
                         `![${cpuLoad.id}](${cpuLoad.url})`,
                         '',
+                        '### Memory Metrics',
+                        `![${memoryUsage.id}](${memoryUsage.url})`,
+                        '',
                         '### IO Metrics',
                         '|               | Read      | Write     |',
                         '|---            |---        |---        |',
@@ -64597,6 +64616,26 @@ function getCPUStats() {
             });
         });
         return { userLoadX, systemLoadX };
+    });
+}
+function getMemoryStats() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let activeMemoryX = [];
+        let availableMemoryX = [];
+        logger.debug('Getting memory stats ...');
+        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/memory`);
+        logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`);
+        response.data.forEach((element) => {
+            activeMemoryX.push({
+                x: element.time,
+                y: element.activeMemoryMb
+            });
+            availableMemoryX.push({
+                x: element.time,
+                y: element.availableMemoryMb
+            });
+        });
+        return { activeMemoryX, availableMemoryX };
     });
 }
 function getNetworkStats() {

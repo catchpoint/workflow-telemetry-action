@@ -10,10 +10,14 @@ import {
   StackedAreaGraphOptions,
   GraphResponse,
   ProcessedStats,
-  DiskStats,
-  ProcessedDiskStats,
+  CPUStats,
+  MemoryStats,
   NetworkStats,
-  ProcessedNetworkStats, ProcessedCPUStats, CPUStats
+  DiskStats,
+  ProcessedCPUStats,
+  ProcessedMemoryStats,
+  ProcessedNetworkStats,
+  ProcessedDiskStats,
 } from './interfaces'
 
 const STAT_SERVER_PORT: number = 7777
@@ -30,6 +34,7 @@ async function run(): Promise<void> {
     await triggerStatCollect()
 
     const { userLoadX, systemLoadX } = await getCPUStats()
+    const { activeMemoryX, availableMemoryX } = await getMemoryStats()
     const { networkReadX, networkWriteX } = await getNetworkStats()
     const { diskReadX, diskWriteX } = await getDiskStats()
 
@@ -38,13 +43,29 @@ async function run(): Promise<void> {
       areas: [
         {
           label: 'User Load',
-          color: '#e41a1c',
+          color: '#e41a1c99',
           points: userLoadX
         },
         {
           label: 'System Load',
-          color: '#ff7f00',
+          color: '#ff7f0099',
           points: systemLoadX
+        }
+      ]
+    })
+
+    const memoryUsage = await getStackedAreaGraph({
+      label: 'Memory Usage (MB)',
+      areas: [
+        {
+          label: 'Used',
+          color: '#377eb899',
+          points: activeMemoryX
+        },
+        {
+          label: 'Free',
+          color: '#4daf4a99',
+          points: availableMemoryX
         }
       ]
     })
@@ -123,6 +144,9 @@ async function run(): Promise<void> {
           '### CPU Metrics',
           `![${cpuLoad.id}](${cpuLoad.url})`,
           '',
+          '### Memory Metrics',
+          `![${memoryUsage.id}](${memoryUsage.url})`,
+          '',
           '### IO Metrics',
           '|               | Read      | Write     |',
           '|---            |---        |---        |',
@@ -171,6 +195,31 @@ async function getCPUStats(): Promise<ProcessedCPUStats> {
   })
 
   return { userLoadX, systemLoadX }
+}
+
+async function getMemoryStats(): Promise<ProcessedMemoryStats> {
+  let activeMemoryX: ProcessedStats[] = []
+  let availableMemoryX: ProcessedStats[] = []
+
+  logger.debug('Getting memory stats ...')
+  const response = await axios.get(
+      `http://localhost:${STAT_SERVER_PORT}/memory`
+  )
+  logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`)
+
+  response.data.forEach((element: MemoryStats) => {
+    activeMemoryX.push({
+      x: element.time,
+      y: element.activeMemoryMb
+    })
+
+    availableMemoryX.push({
+      x: element.time,
+      y: element.availableMemoryMb
+    })
+  })
+
+  return { activeMemoryX, availableMemoryX }
 }
 
 async function getNetworkStats(): Promise<ProcessedNetworkStats> {

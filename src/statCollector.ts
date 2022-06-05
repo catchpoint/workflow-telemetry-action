@@ -2,7 +2,7 @@ import si from 'systeminformation'
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 import * as logger from './logger'
 
-import { CPUStats, DiskStats, NetworkStats } from './interfaces'
+import { CPUStats, MemoryStats, DiskStats, NetworkStats } from './interfaces'
 
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
@@ -18,7 +18,7 @@ let statCollectTime: number = 0
 
 ///////////////////////////
 
-// CPU Stats            //
+// CPU Stats             //
 ///////////////////////////
 
 const cpuStatsHistogram: CPUStats[] = []
@@ -37,6 +37,33 @@ function collectCPUStats(
           systemLoad: data.currentLoadSystem
         }
         cpuStatsHistogram.push(cpuStats)
+      })
+      .catch((error: any) => {
+        logger.error(error)
+      })
+}
+
+///////////////////////////
+
+// Memory Stats          //
+///////////////////////////
+
+const memoryStatsHistogram: MemoryStats[] = []
+
+function collectMemoryStats(
+    statTime: number,
+    timeInterval: number
+): Promise<any> {
+  return si
+      .mem()
+      .then((data: si.Systeminformation.MemData) => {
+        const memoryStats: MemoryStats = {
+          time: statTime,
+          totalMemoryMb: data.total / 1024 / 1024,
+          activeMemoryMb: data.active / 1024 / 1024,
+          availableMemoryMb: data.available / 1024 / 1024
+        }
+        memoryStatsHistogram.push(memoryStats)
       })
       .catch((error: any) => {
         logger.error(error)
@@ -117,6 +144,7 @@ async function collectStats(triggeredFromScheduler: boolean = true) {
     const promises: Promise<any>[] = []
 
     promises.push(collectCPUStats(statCollectTime, timeInterval))
+    promises.push(collectMemoryStats(statCollectTime, timeInterval))
     promises.push(collectNetworkStats(statCollectTime, timeInterval))
     promises.push(collectDiskStats(statCollectTime, timeInterval))
 
@@ -137,6 +165,15 @@ function startHttpServer() {
           case '/cpu': {
             if (request.method === 'GET') {
               response.end(JSON.stringify(cpuStatsHistogram))
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
+            break
+          }
+          case '/memory': {
+            if (request.method === 'GET') {
+              response.end(JSON.stringify(memoryStatsHistogram))
             } else {
               response.statusCode = 405
               response.end()
