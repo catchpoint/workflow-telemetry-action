@@ -3,6 +3,13 @@ export interface JobInfo {
     readonly name?: string
 }
 
+export interface CPUStats {
+    readonly time: number
+    readonly totalLoad: number
+    readonly userLoad: number
+    readonly systemLoad: number
+}
+
 export interface NetworkStats {
     readonly time: number
     readonly rxMb: number
@@ -20,6 +27,11 @@ export interface ProcessedStats {
     readonly y: number
 }
 
+export interface ProcessedCPUStats {
+    readonly userLoadX: ProcessedStats[],
+    readonly systemLoadX: ProcessedStats[],
+}
+
 export interface ProcessedNetworkStats {
     readonly networkReadX: ProcessedStats[],
     readonly networkWriteX: ProcessedStats[],
@@ -30,13 +42,24 @@ export interface ProcessedDiskStats {
     readonly diskWriteX: ProcessedStats[],
 }
 
-export interface GraphOptions {
+export interface LineGraphOptions {
     readonly label: string,
     readonly line: {
         readonly label: string,
         readonly color: string,
         readonly points: ProcessedStats[]
     }
+}
+
+export interface StackedArea {
+    readonly label: string,
+    readonly color: string,
+    readonly points: ProcessedStats[]
+}
+
+export interface StackedAreaGraphOptions {
+    readonly label: string,
+    readonly areas: StackedArea[]
 }
 
 export interface GraphResponse {

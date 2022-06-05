@@ -2,7 +2,7 @@ import si from 'systeminformation'
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 import * as logger from './logger'
 
-import { DiskStats, NetworkStats } from './interfaces'
+import { CPUStats, DiskStats, NetworkStats } from './interfaces'
 
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
@@ -15,6 +15,35 @@ const SERVER_PORT: number =
 
 let expectedScheduleTime: number = 0
 let statCollectTime: number = 0
+
+///////////////////////////
+
+// CPU Stats            //
+///////////////////////////
+
+const cpuStatsHistogram: CPUStats[] = []
+
+function collectCPUStats(
+    statTime: number,
+    timeInterval: number
+): Promise<any> {
+  return si
+      .currentLoad()
+      .then((data: si.Systeminformation.CurrentLoadData) => {
+        const cpuStats: CPUStats = {
+          time: statTime,
+          totalLoad: data.currentLoad,
+          userLoad: data.currentLoadUser,
+          systemLoad: data.currentLoadSystem
+        }
+        cpuStatsHistogram.push(cpuStats)
+      })
+      .catch((error: any) => {
+        logger.error(error)
+      })
+}
+
+///////////////////////////
 
 // Network Stats         //
 ///////////////////////////
@@ -87,6 +116,7 @@ async function collectStats(triggeredFromScheduler: boolean = true) {
 
     const promises: Promise<any>[] = []
 
+    promises.push(collectCPUStats(statCollectTime, timeInterval))
     promises.push(collectNetworkStats(statCollectTime, timeInterval))
     promises.push(collectDiskStats(statCollectTime, timeInterval))
 
@@ -104,6 +134,15 @@ function startHttpServer() {
     async (request: IncomingMessage, response: ServerResponse) => {
       try {
         switch (request.url) {
+          case '/cpu': {
+            if (request.method === 'GET') {
+              response.end(JSON.stringify(cpuStatsHistogram))
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
+            break
+          }
           case '/network': {
             if (request.method === 'GET') {
               response.end(JSON.stringify(networkStatsHistogram))

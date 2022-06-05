@@ -17432,6 +17432,27 @@ const SERVER_HOST = 'localhost';
 const SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777;
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
+///////////////////////////
+// CPU Stats            //
+///////////////////////////
+const cpuStatsHistogram = [];
+function collectCPUStats(statTime, timeInterval) {
+    return systeminformation_1.default
+        .currentLoad()
+        .then((data) => {
+        const cpuStats = {
+            time: statTime,
+            totalLoad: data.currentLoad,
+            userLoad: data.currentLoadUser,
+            systemLoad: data.currentLoadSystem
+        };
+        cpuStatsHistogram.push(cpuStats);
+    })
+        .catch((error) => {
+        logger.error(error);
+    });
+}
+///////////////////////////
 // Network Stats         //
 ///////////////////////////
 const networkStatsHistogram = [];
@@ -17486,6 +17507,7 @@ function collectStats(triggeredFromScheduler = true) {
                 : 0;
             statCollectTime = currentTime;
             const promises = [];
+            promises.push(collectCPUStats(statCollectTime, timeInterval));
             promises.push(collectNetworkStats(statCollectTime, timeInterval));
             promises.push(collectDiskStats(statCollectTime, timeInterval));
             return promises;
@@ -17502,6 +17524,16 @@ function startHttpServer() {
     const server = (0, http_1.createServer)((request, response) => __awaiter(this, void 0, void 0, function* () {
         try {
             switch (request.url) {
+                case '/cpu': {
+                    if (request.method === 'GET') {
+                        response.end(JSON.stringify(cpuStatsHistogram));
+                    }
+                    else {
+                        response.statusCode = 405;
+                        response.end();
+                    }
+                    break;
+                }
                 case '/network': {
                     if (request.method === 'GET') {
                         response.end(JSON.stringify(networkStatsHistogram));
