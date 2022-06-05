@@ -6,13 +6,14 @@ import axios from 'axios'
 import { Octokit } from '@octokit/action'
 import {
   JobInfo,
-  GraphOptions,
+  LineGraphOptions,
+  StackedAreaGraphOptions,
   GraphResponse,
   ProcessedStats,
   DiskStats,
   ProcessedDiskStats,
   NetworkStats,
-  ProcessedNetworkStats
+  ProcessedNetworkStats, ProcessedCPUStats, CPUStats
 } from './interfaces'
 
 const STAT_SERVER_PORT: number = 7777
@@ -28,10 +29,27 @@ async function run(): Promise<void> {
     // Trigger stat collect, so we will have remaining stats since the latest schedule
     await triggerStatCollect()
 
+    const { userLoadX, systemLoadX } = await getCPUStats()
     const { networkReadX, networkWriteX } = await getNetworkStats()
     const { diskReadX, diskWriteX } = await getDiskStats()
 
-    const networkIORead = await getGraph({
+    const cpuLoad = await getStackedAreaGraph({
+      label: 'CPU Load (%)',
+      areas: [
+        {
+          label: 'User Load',
+          color: '#e41a1c',
+          points: userLoadX
+        },
+        {
+          label: 'System Load',
+          color: '#ff7f00',
+          points: systemLoadX
+        }
+      ]
+    })
+
+    const networkIORead = await getLineGraph({
       label: 'Network I/O Read (MB)',
       line: {
         label: 'Read',
@@ -40,7 +58,7 @@ async function run(): Promise<void> {
       }
     })
 
-    const networkIOWrite = await getGraph({
+    const networkIOWrite = await getLineGraph({
       label: 'Network I/O Write (MB)',
       line: {
         label: 'Write',
@@ -49,7 +67,7 @@ async function run(): Promise<void> {
       }
     })
 
-    const diskIORead = await getGraph({
+    const diskIORead = await getLineGraph({
       label: 'Disk I/O Read (MB)',
       line: {
         label: 'Read',
@@ -58,7 +76,7 @@ async function run(): Promise<void> {
       }
     })
 
-    const diskIOWrite = await getGraph({
+    const diskIOWrite = await getLineGraph({
       label: 'Disk I/O Write (MB)',
       line: {
         label: 'Write',
@@ -102,6 +120,10 @@ async function run(): Promise<void> {
           '',
           info,
           '',
+          '### CPU Metrics',
+          `![${cpuLoad.id}](${cpuLoad.url})`,
+          '',
+          '### IO Metrics',
           '|               | Read      | Write     |',
           '|---            |---        |---        |',
           `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
@@ -124,6 +146,31 @@ async function triggerStatCollect(): Promise<void> {
     `http://localhost:${STAT_SERVER_PORT}/collect`
   )
   logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
+}
+
+async function getCPUStats(): Promise<ProcessedCPUStats> {
+  let userLoadX: ProcessedStats[] = []
+  let systemLoadX: ProcessedStats[] = []
+
+  logger.debug('Getting CPU stats ...')
+  const response = await axios.get(
+    `http://localhost:${STAT_SERVER_PORT}/cpu`
+  )
+  logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`)
+
+  response.data.forEach((element: CPUStats) => {
+    userLoadX.push({
+      x: element.time,
+      y: element.userLoad
+    })
+
+    systemLoadX.push({
+      x: element.time,
+      y: element.systemLoad
+    })
+  })
+
+  return { userLoadX, systemLoadX }
 }
 
 async function getNetworkStats(): Promise<ProcessedNetworkStats> {
@@ -174,7 +221,7 @@ async function getDiskStats(): Promise<ProcessedDiskStats> {
   return { diskReadX, diskWriteX }
 }
 
-async function getGraph(options: GraphOptions): Promise<GraphResponse> {
+async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
   const payload = {
     options: {
       width: 1000,
@@ -195,6 +242,32 @@ async function getGraph(options: GraphOptions): Promise<GraphResponse> {
   const response = await axios.put(
     'https://api.globadge.com/v1/chartgen/line/time',
     payload
+  )
+
+  return response.data
+}
+
+async function getStackedAreaGraph(options: StackedAreaGraphOptions): Promise<GraphResponse> {
+  const payload = {
+    options: {
+      width: 1000,
+      height: 500,
+      xAxis: {
+        label: 'Time'
+      },
+      yAxis: {
+        label: options.label
+      },
+      timeTicks: {
+        unit: 'auto'
+      }
+    },
+    areas: options.areas
+  }
+
+  const response = await axios.put(
+      'https://api.globadge.com/v1/chartgen/stacked-area/time',
+      payload
   )
 
   return response.data

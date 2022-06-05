@@ -64476,9 +64476,25 @@ function run() {
             logger.info(`Finishing ...`);
             // Trigger stat collect, so we will have remaining stats since the latest schedule
             yield triggerStatCollect();
+            const { userLoadX, systemLoadX } = yield getCPUStats();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
             const { diskReadX, diskWriteX } = yield getDiskStats();
-            const networkIORead = yield getGraph({
+            const cpuLoad = yield getStackedAreaGraph({
+                label: 'CPU Load (%)',
+                areas: [
+                    {
+                        label: 'User Load',
+                        color: '#e41a1c',
+                        points: userLoadX
+                    },
+                    {
+                        label: 'System Load',
+                        color: '#ff7f00',
+                        points: systemLoadX
+                    }
+                ]
+            });
+            const networkIORead = yield getLineGraph({
                 label: 'Network I/O Read (MB)',
                 line: {
                     label: 'Read',
@@ -64486,7 +64502,7 @@ function run() {
                     points: networkReadX
                 }
             });
-            const networkIOWrite = yield getGraph({
+            const networkIOWrite = yield getLineGraph({
                 label: 'Network I/O Write (MB)',
                 line: {
                     label: 'Write',
@@ -64494,7 +64510,7 @@ function run() {
                     points: networkWriteX
                 }
             });
-            const diskIORead = yield getGraph({
+            const diskIORead = yield getLineGraph({
                 label: 'Disk I/O Read (MB)',
                 line: {
                     label: 'Read',
@@ -64502,7 +64518,7 @@ function run() {
                     points: diskReadX
                 }
             });
-            const diskIOWrite = yield getGraph({
+            const diskIOWrite = yield getLineGraph({
                 label: 'Disk I/O Write (MB)',
                 line: {
                     label: 'Write',
@@ -64536,6 +64552,10 @@ function run() {
                         '',
                         info,
                         '',
+                        '### CPU Metrics',
+                        `![${cpuLoad.id}](${cpuLoad.url})`,
+                        '',
+                        '### IO Metrics',
                         '|               | Read      | Write     |',
                         '|---            |---        |---        |',
                         `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
@@ -64557,6 +64577,26 @@ function triggerStatCollect() {
         logger.debug('Triggering stat collect ...');
         const response = yield axios_1.default.post(`http://localhost:${STAT_SERVER_PORT}/collect`);
         logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
+    });
+}
+function getCPUStats() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let userLoadX = [];
+        let systemLoadX = [];
+        logger.debug('Getting CPU stats ...');
+        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/cpu`);
+        logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`);
+        response.data.forEach((element) => {
+            userLoadX.push({
+                x: element.time,
+                y: element.userLoad
+            });
+            systemLoadX.push({
+                x: element.time,
+                y: element.systemLoad
+            });
+        });
+        return { userLoadX, systemLoadX };
     });
 }
 function getNetworkStats() {
@@ -64599,7 +64639,7 @@ function getDiskStats() {
         return { diskReadX, diskWriteX };
     });
 }
-function getGraph(options) {
+function getLineGraph(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = {
             options: {
@@ -64618,6 +64658,28 @@ function getGraph(options) {
             lines: [options.line]
         };
         const response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/line/time', payload);
+        return response.data;
+    });
+}
+function getStackedAreaGraph(options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const payload = {
+            options: {
+                width: 1000,
+                height: 500,
+                xAxis: {
+                    label: 'Time'
+                },
+                yAxis: {
+                    label: options.label
+                },
+                timeTicks: {
+                    unit: 'auto'
+                }
+            },
+            areas: options.areas
+        };
+        const response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/stacked-area/time', payload);
         return response.data;
     });
 }
