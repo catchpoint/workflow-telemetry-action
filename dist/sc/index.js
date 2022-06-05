@@ -17433,7 +17433,7 @@ const SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') |
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
 ///////////////////////////
-// CPU Stats            //
+// CPU Stats             //
 ///////////////////////////
 const cpuStatsHistogram = [];
 function collectCPUStats(statTime, timeInterval) {
@@ -17447,6 +17447,26 @@ function collectCPUStats(statTime, timeInterval) {
             systemLoad: data.currentLoadSystem
         };
         cpuStatsHistogram.push(cpuStats);
+    })
+        .catch((error) => {
+        logger.error(error);
+    });
+}
+///////////////////////////
+// Memory Stats          //
+///////////////////////////
+const memoryStatsHistogram = [];
+function collectMemoryStats(statTime, timeInterval) {
+    return systeminformation_1.default
+        .mem()
+        .then((data) => {
+        const memoryStats = {
+            time: statTime,
+            totalMemoryMb: data.total / 1024 / 1024,
+            activeMemoryMb: data.active / 1024 / 1024,
+            availableMemoryMb: data.available / 1024 / 1024
+        };
+        memoryStatsHistogram.push(memoryStats);
     })
         .catch((error) => {
         logger.error(error);
@@ -17508,6 +17528,7 @@ function collectStats(triggeredFromScheduler = true) {
             statCollectTime = currentTime;
             const promises = [];
             promises.push(collectCPUStats(statCollectTime, timeInterval));
+            promises.push(collectMemoryStats(statCollectTime, timeInterval));
             promises.push(collectNetworkStats(statCollectTime, timeInterval));
             promises.push(collectDiskStats(statCollectTime, timeInterval));
             return promises;
@@ -17527,6 +17548,16 @@ function startHttpServer() {
                 case '/cpu': {
                     if (request.method === 'GET') {
                         response.end(JSON.stringify(cpuStatsHistogram));
+                    }
+                    else {
+                        response.statusCode = 405;
+                        response.end();
+                    }
+                    break;
+                }
+                case '/memory': {
+                    if (request.method === 'GET') {
+                        response.end(JSON.stringify(memoryStatsHistogram));
                     }
                     else {
                         response.statusCode = 405;
