@@ -3,6 +3,7 @@
 A GitHub Action to track and monitor the resource metrics of your GitHub Action workflow runs. If the run is triggered via a Pull Request, it will create a comment on the connected PR with the results. The action collects the following metrics:
 
 - CPU Load (user and system) in percentage
+- Memory usage (used and free) in MB
 - Network I/O (read and write) in MB
 - Disk I/O (read and write) in MB
 
