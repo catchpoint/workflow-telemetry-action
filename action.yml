@@ -7,8 +7,16 @@ inputs:
     default: ${{ github.token }}
     required: false
   stat_frequency:
-    description: "Statistic Collection Frequency. Should be an Integer. Defaults to 5."
+    description: "Statistic collection frequency in seconds. Must be a number. Defaults to '5'."
     default: 5
+    required: false
+  comment_on_pr:
+    description: "Set to `true` to publish the results as comment to the PR (applicable if workflow run is triggered from PR). Defaults to 'true'."
+    default: 'true'
+    required: false
+  job_summary:
+    description: "Set to `true` to publish the results as part of the job summary page of the workflow run. Defaults to 'true'."
+    default: 'true'
     required: false
 runs:
   using: "node12"
