@@ -64542,47 +64542,56 @@ function run() {
                     points: diskWriteX
                 }
             });
-            if (pull_request) {
-                logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
-                const octokit = new action_1.Octokit();
-                logger.debug(`Workflow - Job: ${workflow} - ${job}`);
-                const commit = (pull_request.head && pull_request.head.sha) || sha;
-                logger.debug(`Commit: ${commit}`);
-                const jobInfo = yield getJobInfo(octokit);
-                logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
-                let title = `## Workflow Telemetry - ${workflow}`;
-                if (jobInfo.name) {
-                    title = `${title} / ${jobInfo.name}`;
-                }
-                else {
-                    title = `${title} / ${job}`;
-                }
-                let info = `Workflow telemetry for commit ${commit}`;
-                if (jobInfo.id) {
-                    const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`;
-                    logger.debug(`Job url: ${jobUrl}`);
-                    info = `${info}\nYou can access workflow job details [here](${jobUrl})`;
-                }
-                yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: [
-                        title,
-                        '',
-                        info,
-                        '',
-                        '### CPU Metrics',
-                        `![${cpuLoad.id}](${cpuLoad.url})`,
-                        '',
-                        '### Memory Metrics',
-                        `![${memoryUsage.id}](${memoryUsage.url})`,
-                        '',
-                        '### IO Metrics',
-                        '|               | Read      | Write     |',
-                        '|---            |---        |---        |',
-                        `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
-                        `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
-                    ].join('\n') }));
+            const octokit = new action_1.Octokit();
+            logger.debug(`Workflow - Job: ${workflow} - ${job}`);
+            let commit = (pull_request && pull_request.head && pull_request.head.sha) || sha;
+            logger.debug(`Commit: ${commit}`);
+            const jobInfo = yield getJobInfo(octokit);
+            logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
+            let title = `## Workflow Telemetry - ${workflow}`;
+            if (jobInfo.name) {
+                title = `${title} / ${jobInfo.name}`;
             }
             else {
-                logger.info(`Couldn't find Pull Request`);
+                title = `${title} / ${job}`;
+            }
+            const commitUrl = `https://github.com/${repo.owner}/${repo.repo}/commit/${commit}`;
+            logger.debug(`Commit url: ${commitUrl}`);
+            let info = `Workflow telemetry for commit [${commit}](${commitUrl})`;
+            if (jobInfo.id) {
+                const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`;
+                logger.debug(`Job url: ${jobUrl}`);
+                info = `${info}\nYou can access workflow job details [here](${jobUrl})`;
+            }
+            const postContent = [
+                title,
+                '',
+                info,
+                '',
+                '### CPU Metrics',
+                `![${cpuLoad.id}](${cpuLoad.url})`,
+                '',
+                '### Memory Metrics',
+                `![${memoryUsage.id}](${memoryUsage.url})`,
+                '',
+                '### IO Metrics',
+                '|               | Read      | Write     |',
+                '|---            |---        |---        |',
+                `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
+                `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
+            ].join('\n');
+            const jobSummary = core.getInput('job_summary');
+            if ('true' === jobSummary) {
+                core.summary.addRaw(postContent);
+                yield core.summary.write();
+            }
+            const commentOnPR = core.getInput('comment_on_pr');
+            if (pull_request && 'true' === commentOnPR) {
+                logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
+                yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: postContent }));
+            }
+            else {
+                logger.debug(`Couldn't find Pull Request`);
             }
             logger.info(`Finish completed`);
         }
