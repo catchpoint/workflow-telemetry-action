@@ -64480,68 +64480,80 @@ function run() {
             const { activeMemoryX, availableMemoryX } = yield getMemoryStats();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
             const { diskReadX, diskWriteX } = yield getDiskStats();
-            const cpuLoad = yield getStackedAreaGraph({
-                label: 'CPU Load (%)',
-                areas: [
-                    {
-                        label: 'User Load',
-                        color: '#e41a1c99',
-                        points: userLoadX
-                    },
-                    {
-                        label: 'System Load',
-                        color: '#ff7f0099',
-                        points: systemLoadX
+            const cpuLoad = userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
+                ? (yield getStackedAreaGraph({
+                    label: 'CPU Load (%)',
+                    areas: [
+                        {
+                            label: 'User Load',
+                            color: '#e41a1c99',
+                            points: userLoadX
+                        },
+                        {
+                            label: 'System Load',
+                            color: '#ff7f0099',
+                            points: systemLoadX
+                        }
+                    ]
+                }))
+                : null;
+            const memoryUsage = activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
+                ? (yield getStackedAreaGraph({
+                    label: 'Memory Usage (MB)',
+                    areas: [
+                        {
+                            label: 'Used',
+                            color: '#377eb899',
+                            points: activeMemoryX
+                        },
+                        {
+                            label: 'Free',
+                            color: '#4daf4a99',
+                            points: availableMemoryX
+                        }
+                    ]
+                }))
+                : null;
+            const networkIORead = networkReadX && networkReadX.length
+                ? (yield getLineGraph({
+                    label: 'Network I/O Read (MB)',
+                    line: {
+                        label: 'Read',
+                        color: '#be4d25',
+                        points: networkReadX
                     }
-                ]
-            });
-            const memoryUsage = yield getStackedAreaGraph({
-                label: 'Memory Usage (MB)',
-                areas: [
-                    {
-                        label: 'Used',
-                        color: '#377eb899',
-                        points: activeMemoryX
-                    },
-                    {
-                        label: 'Free',
-                        color: '#4daf4a99',
-                        points: availableMemoryX
+                }))
+                : null;
+            const networkIOWrite = networkWriteX && networkWriteX.length
+                ? (yield getLineGraph({
+                    label: 'Network I/O Write (MB)',
+                    line: {
+                        label: 'Write',
+                        color: '#6c25be',
+                        points: networkWriteX
                     }
-                ]
-            });
-            const networkIORead = yield getLineGraph({
-                label: 'Network I/O Read (MB)',
-                line: {
-                    label: 'Read',
-                    color: '#be4d25',
-                    points: networkReadX
-                }
-            });
-            const networkIOWrite = yield getLineGraph({
-                label: 'Network I/O Write (MB)',
-                line: {
-                    label: 'Write',
-                    color: '#6c25be',
-                    points: networkWriteX
-                }
-            });
-            const diskIORead = yield getLineGraph({
-                label: 'Disk I/O Read (MB)',
-                line: {
-                    label: 'Read',
-                    color: '#be4d25',
-                    points: diskReadX
-                }
-            });
-            const diskIOWrite = yield getLineGraph({
-                label: 'Disk I/O Write (MB)',
-                line: {
-                    label: 'Write',
-                    color: '#6c25be',
-                    points: diskWriteX
-                }
-            });
+                }))
+                : null;
+            const diskIORead = diskReadX && diskReadX.length
+                ? (yield getLineGraph({
+                    label: 'Disk I/O Read (MB)',
+                    line: {
+                        label: 'Read',
+                        color: '#be4d25',
+                        points: diskReadX
+                    }
+                }))
+                : null;
+            const diskIOWrite = diskWriteX && diskWriteX.length
+                ? (yield getLineGraph({
+                    label: 'Disk I/O Write (MB)',
+                    line: {
+                        label: 'Write',
+                        color: '#6c25be',
+                        points: diskWriteX
+                    }
+                }))
+                : null;
             const octokit = new action_1.Octokit();
             logger.debug(`Workflow - Job: ${workflow} - ${job}`);
             let commit = (pull_request && pull_request.head && pull_request.head.sha) || sha;
@@ -64563,23 +64575,28 @@ function run() {
                 logger.debug(`Job url: ${jobUrl}`);
                 info = `${info}\nYou can access workflow job details [here](${jobUrl})`;
             }
-            const postContent = [
+            const postContentItems = [
                 title,
                 '',
                 info,
                 '',
-                '### CPU Metrics',
-                `![${cpuLoad.id}](${cpuLoad.url})`,
-                '',
-                '### Memory Metrics',
-                `![${memoryUsage.id}](${memoryUsage.url})`,
-                '',
-                '### IO Metrics',
-                '|               | Read      | Write     |',
-                '|---            |---        |---        |',
-                `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
-                `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
-            ].join('\n');
+            ];
+            if (cpuLoad) {
+                postContentItems.push('### CPU Metrics', `![${cpuLoad.id}](${cpuLoad.url})`, '');
+            }
+            if (memoryUsage) {
+                postContentItems.push('### Memory Metrics', `![${memoryUsage.id}](${memoryUsage.url})`, '');
+            }
+            if ((networkIORead && networkIOWrite) || (diskIORead && diskIOWrite)) {
+                postContentItems.push('### IO Metrics', '|               | Read      | Write     |', '|---            |---        |---        |');
+            }
+            if (networkIORead && networkIOWrite) {
+                postContentItems.push(`| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`);
+            }
+            if (diskIORead && diskIOWrite) {
+                postContentItems.push(`| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`);
+            }
+            const postContent = postContentItems.join('\n');
             const jobSummary = core.getInput('job_summary');
             if ('true' === jobSummary) {
                 core.summary.addRaw(postContent);

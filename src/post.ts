@@ -38,73 +38,91 @@ async function run(): Promise<void> {
     const { networkReadX, networkWriteX } = await getNetworkStats()
     const { diskReadX, diskWriteX } = await getDiskStats()
 
-    const cpuLoad = await getStackedAreaGraph({
-      label: 'CPU Load (%)',
-      areas: [
-        {
-          label: 'User Load',
-          color: '#e41a1c99',
-          points: userLoadX
-        },
-        {
-          label: 'System Load',
-          color: '#ff7f0099',
-          points: systemLoadX
-        }
-      ]
-    })
+    const cpuLoad =
+        userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
+          ? (await getStackedAreaGraph({
+              label: 'CPU Load (%)',
+              areas: [
+                {
+                  label: 'User Load',
+                  color: '#e41a1c99',
+                  points: userLoadX
+                },
+                {
+                  label: 'System Load',
+                  color: '#ff7f0099',
+                  points: systemLoadX
+                }
+              ]
+            }))
+          : null
 
-    const memoryUsage = await getStackedAreaGraph({
-      label: 'Memory Usage (MB)',
-      areas: [
-        {
-          label: 'Used',
-          color: '#377eb899',
-          points: activeMemoryX
-        },
-        {
-          label: 'Free',
-          color: '#4daf4a99',
-          points: availableMemoryX
-        }
-      ]
-    })
+    const memoryUsage =
+        activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
+          ? (await getStackedAreaGraph({
+              label: 'Memory Usage (MB)',
+              areas: [
+                {
+                  label: 'Used',
+                  color: '#377eb899',
+                  points: activeMemoryX
+                },
+                {
+                  label: 'Free',
+                  color: '#4daf4a99',
+                  points: availableMemoryX
+                }
+              ]
+            }))
+          : null
 
-    const networkIORead = await getLineGraph({
-      label: 'Network I/O Read (MB)',
-      line: {
-        label: 'Read',
-        color: '#be4d25',
-        points: networkReadX
-      }
-    })
+    const networkIORead =
+        networkReadX && networkReadX.length
+            ? (await getLineGraph({
+                label: 'Network I/O Read (MB)',
+                line: {
+                  label: 'Read',
+                  color: '#be4d25',
+                  points: networkReadX
+                }
+              }))
+            : null
 
-    const networkIOWrite = await getLineGraph({
-      label: 'Network I/O Write (MB)',
-      line: {
-        label: 'Write',
-        color: '#6c25be',
-        points: networkWriteX
-      }
-    })
+    const networkIOWrite =
+        networkWriteX && networkWriteX.length
+          ? (await getLineGraph({
+              label: 'Network I/O Write (MB)',
+              line: {
+                label: 'Write',
+                color: '#6c25be',
+                points: networkWriteX
+              }
+            }))
+          : null
 
-    const diskIORead = await getLineGraph({
-      label: 'Disk I/O Read (MB)',
-      line: {
-        label: 'Read',
-        color: '#be4d25',
-        points: diskReadX
-      }
-    })
+    const diskIORead =
+        diskReadX && diskReadX.length
+          ? (await getLineGraph({
+              label: 'Disk I/O Read (MB)',
+              line: {
+                label: 'Read',
+                color: '#be4d25',
+                points: diskReadX
+              }
+            }))
+          : null
 
-    const diskIOWrite = await getLineGraph({
-      label: 'Disk I/O Write (MB)',
-      line: {
-        label: 'Write',
-        color: '#6c25be',
-        points: diskWriteX
-      }
-    })
+    const diskIOWrite =
+        diskWriteX && diskWriteX.length
+        ? (await getLineGraph({
+            label: 'Disk I/O Write (MB)',
+            line: {
+              label: 'Write',
+              color: '#6c25be',
+              points: diskWriteX
+            }
+          }))
+        : null
 
     const octokit: Octokit = new Octokit()
 
@@ -133,23 +151,44 @@ async function run(): Promise<void> {
       info = `${info}\nYou can access workflow job details [here](${jobUrl})`
     }
 
-    const postContent: string = [
+    const postContentItems: string[] = [
       title,
       '',
       info,
       '',
-      '### CPU Metrics',
-      `![${cpuLoad.id}](${cpuLoad.url})`,
-      '',
-      '### Memory Metrics',
-      `![${memoryUsage.id}](${memoryUsage.url})`,
-      '',
-      '### IO Metrics',
-      '|               | Read      | Write     |',
-      '|---            |---        |---        |',
-      `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`,
-      `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
-    ].join('\n')
+    ]
+    if (cpuLoad) {
+      postContentItems.push(
+        '### CPU Metrics',
+        `![${cpuLoad.id}](${cpuLoad.url})`,
+        ''
+      )
+    }
+    if (memoryUsage) {
+      postContentItems.push(
+        '### Memory Metrics',
+        `![${memoryUsage.id}](${memoryUsage.url})`,
+        ''
+      )
+    }
+    if ((networkIORead && networkIOWrite) || (diskIORead && diskIOWrite)) {
+      postContentItems.push(
+        '### IO Metrics',
+        '|               | Read      | Write     |',
+        '|---            |---        |---        |'
+      )
+    }
+    if (networkIORead && networkIOWrite) {
+      postContentItems.push(
+          `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`
+      )
+    }
+    if (diskIORead && diskIOWrite) {
+      postContentItems.push(
+          `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
+      )
+    }
+    const postContent: string = postContentItems.join('\n')
 
     const jobSummary: string = core.getInput('job_summary')
     if ('true' === jobSummary) {
