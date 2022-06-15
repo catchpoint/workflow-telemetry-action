@@ -10,6 +10,14 @@ inputs:
     description: "Statistic collection frequency in seconds. Must be a number. Defaults to '5'."
     default: 5
     required: false
+  min_proc_duration:
+    description: "Minimum duration value in milliseconds to trace processes. Must be a number. Defaults to '-1' (no min value)."
+    default: -1
+    required: false
+  trace_sys_procs:
+    description: "Enables tracing default system processes ('aws', 'cat', 'sed', ...). Defaults to 'false'."
+    default: 'false'
+    required: false
   comment_on_pr:
     description: "Set to `true` to publish the results as comment to the PR (applicable if workflow run is triggered from PR). Defaults to 'true'."
     default: 'true'
@@ -18,6 +26,7 @@ inputs:
     description: "Set to `true` to publish the results as part of the job summary page of the workflow run. Defaults to 'true'."
     default: 'true'
     required: false
+
 runs:
   using: "node12"
   main: dist/main/index.js

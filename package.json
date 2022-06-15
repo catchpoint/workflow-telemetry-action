@@ -1,8 +1,8 @@
 {
-  "name": "workflow-metrics-action",
+  "name": "workflow-telemetry-action",
   "version": "0.0.0",
   "private": true,
-  "description": "Workflow Metrics Action",
+  "description": "Workflow Telemetry Action",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -11,21 +11,21 @@
     "lint": "eslint src/**/*.ts",
     "package:main": "ncc build --source-map src/main.ts --out dist/main",
     "package:post": "ncc build --source-map src/post.ts --out dist/post",
-    "package:statCollector": "ncc build --source-map src/statCollector.ts --out dist/sc",
-    "package": "npm run package:main && npm run package:post && npm run package:statCollector",
+    "package:scw": "ncc build --source-map src/statCollectorWorker.ts --out dist/scw",
+    "package": "npm run package:main && npm run package:post && npm run package:scw",
     "test": "echo \"Warn: no test specified\" && exit 0",
     "all": "npm run build && npm run package && npm test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/serkan-ozal/workflow-metrics-action.git"
+    "url": "git+https://github.com/thundra-io/workflow-telemetry-action.git"
   },
   "keywords": [
     "actions",
     "node",
     "setup"
   ],
-  "author": "Serkan Özal <serkanozal86@gmail.com>",
+  "author": "Serkan Özal <serkan@thundra.io>",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.4.0",
@@ -33,10 +33,12 @@
     "@actions/github": "^5.0.3",
     "@octokit/action": "^3.18.1",
     "axios": "^0.27.2",
+    "sprintf-js": "^1.1.2",
     "systeminformation": "^5.11.15"
   },
   "devDependencies": {
     "@types/node": "^16.3.3",
+    "@types/sprintf-js": "^1.1.2",
     "@typescript-eslint/parser": "^4.28.3",
     "@vercel/ncc": "^0.25.1",
     "eslint": "^7.31.0",
