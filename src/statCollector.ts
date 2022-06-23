@@ -7,7 +7,7 @@ import * as github from '@actions/github';
 import {
   CPUStats, DiskStats, GraphResponse,
   JobInfo, LineGraphOptions,
-  MemoryStats, NetworkStats,
+  MemoryStats, MetricWorkflowData, NetworkStats,
   ProcessedCPUStats, ProcessedDiskStats,
   ProcessedMemoryStats,
   ProcessedNetworkStats,
@@ -470,7 +470,13 @@ export async function sendData(port: number): Promise<void> {
     const response = await axios.post(
         `http://localhost:${port}/get_metrics`
     )
-    logger.info(`Prepared workflow telemetry data to send: ${JSON.stringify(response.data)}`)
+    response.data.forEach((element: MetricWorkflowData) => {
+      logger.info(`
+        type: ${element.type},
+        version: ${element.version},
+        data: ${element.data}
+      `)
+    });
   } catch (error: any) {
     logger.error('Unable to send stat collector result')
     logger.error(error)
