@@ -1,12 +1,10 @@
 import * as logger from './logger';
 
 export async function setServerPort() {
-    const random_port = require('random-port');
+    var portfinder = require('portfinder');
     const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
     if(!port) {
-        random_port((port: number) => {
-            process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = port.toString();
-        });
+        process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = await portfinder.getPort();
     }
     logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
 }
