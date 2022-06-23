@@ -16,6 +16,7 @@ async function run(): Promise<void> {
 
     // Report stat collector
     await statCollector.report(port)
+    await statCollector.sendData(port)
     // Report process tracer
     await processTracer.report()
 

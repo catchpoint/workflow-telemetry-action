@@ -3,6 +3,8 @@ import * as core from '@actions/core'
 
 export const WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
 
+export const WORKFLOW_TELEMETRY_VERSION = "v1";
+
 export async function setServerPort() {
     var portfinder = require('portfinder');
     const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');

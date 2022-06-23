@@ -6,7 +6,9 @@ import {
   MemoryStats,
   DiskStats,
   NetworkStats,
+  MetricWorkflowData,
 } from './interfaces'
+import { WORKFLOW_TELEMETRY_VERSION } from './utils'
 
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
@@ -15,6 +17,8 @@ const SERVER_PORT: number = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT 
 
 let expectedScheduleTime: number = 0
 let statCollectTime: number = 0
+
+const metricWorkflowData: MetricWorkflowData[] = []
 
 ///////////////////////////
 
@@ -132,6 +136,52 @@ function collectDiskStats(
 
 ///////////////////////////
 
+async function collectMetrics() {
+  try {
+    for(const cpuStats of cpuStatsHistogram) {
+      const cpuMetric: MetricWorkflowData = {
+        type: "CPU",
+        version: WORKFLOW_TELEMETRY_VERSION,
+        data: new Map(Object.entries(cpuStats))
+      }
+      metricWorkflowData.push(cpuMetric);
+    }
+
+    for(const memoryStats of memoryStatsHistogram) {
+      const memoryMetric: MetricWorkflowData = {
+        type: "MEMORY",
+        version: WORKFLOW_TELEMETRY_VERSION,
+        data: new Map(Object.entries(memoryStats))
+      }
+      metricWorkflowData.push(memoryMetric);
+    }
+
+    for(const networkStats of networkStatsHistogram) {
+      const networkMetric: MetricWorkflowData = {
+        type: "NETWORK",
+        version: WORKFLOW_TELEMETRY_VERSION,
+        data: new Map(Object.entries(networkStats))
+      }
+      metricWorkflowData.push(networkMetric);
+    }
+
+
+    for(const diskStats of diskStatsHistogram) {
+      const diskMetric: MetricWorkflowData = {
+        type: "DISK",
+        version: WORKFLOW_TELEMETRY_VERSION,
+        data: new Map(Object.entries(diskStats))
+      }
+      metricWorkflowData.push(diskMetric);
+    }
+  } catch(err: any) {
+    logger.debug(`Couldn't retrieve metrics data to send!`);
+  }
+}
+
+
+
+
 async function collectStats(triggeredFromScheduler: boolean = true) {
   try {
     const currentTime: number = Date.now()
@@ -143,10 +193,10 @@ async function collectStats(triggeredFromScheduler: boolean = true) {
 
     const promises: Promise<any>[] = []
 
-    promises.push(await collectCPUStats(statCollectTime, timeInterval))
-    promises.push(await collectMemoryStats(statCollectTime, timeInterval))
-    promises.push(await collectNetworkStats(statCollectTime, timeInterval))
-    promises.push(await collectDiskStats(statCollectTime, timeInterval))
+    promises.push(collectCPUStats(statCollectTime, timeInterval))
+    promises.push(collectMemoryStats(statCollectTime, timeInterval))
+    promises.push(collectNetworkStats(statCollectTime, timeInterval))
+    promises.push(collectDiskStats(statCollectTime, timeInterval))
 
     return promises
   } finally {
@@ -207,6 +257,16 @@ function startHttpServer() {
               response.end()
             }
             break
+          }
+          case '/get_metrics': {
+            if (request.method === 'POST') {
+              await collectMetrics()
+              response.end(JSON.stringify(metricWorkflowData))
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
+            break;
           }
           default: {
             response.statusCode = 404

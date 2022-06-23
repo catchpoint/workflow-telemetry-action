@@ -86977,6 +86977,7 @@ function run() {
             yield processTracer.finish();
             // Report stat collector
             yield statCollector.report(port);
+            yield statCollector.sendData(port);
             // Report process tracer
             yield processTracer.report();
             logger.info(`Finish completed`);
@@ -87397,7 +87398,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.report = exports.finish = exports.start = void 0;
+exports.sendData = exports.report = exports.finish = exports.start = void 0;
 const child_process_1 = __webpack_require__(3129);
 const path_1 = __importDefault(__webpack_require__(5622));
 const axios_1 = __importDefault(__webpack_require__(6545));
@@ -87777,6 +87778,20 @@ function report(port) {
     });
 }
 exports.report = report;
+function sendData(port) {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Send stat collector result ...`);
+        try {
+            const response = yield axios_1.default.post(`http://localhost:${port}/get_metrics`);
+            logger.info(`Prepared workflow telemetry data to send: ${JSON.stringify(response.data)}`);
+        }
+        catch (error) {
+            logger.error('Unable to send stat collector result');
+            logger.error(error);
+        }
+    });
+}
+exports.sendData = sendData;
 
 
 /***/ }),
@@ -87819,10 +87834,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setServerPort = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
+exports.setServerPort = exports.WORKFLOW_TELEMETRY_VERSION = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
 const logger = __importStar(__webpack_require__(4636));
 const core = __importStar(__webpack_require__(2186));
 exports.WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
+exports.WORKFLOW_TELEMETRY_VERSION = "v1";
 function setServerPort() {
     return __awaiter(this, void 0, void 0, function* () {
         var portfinder = __webpack_require__(147);

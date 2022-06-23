@@ -462,3 +462,17 @@ export async function report(port:number): Promise<void> {
     logger.error(error)
   }
 }
+
+
+export async function sendData(port: number): Promise<void> {
+  logger.info(`Send stat collector result ...`)
+  try {
+    const response = await axios.post(
+        `http://localhost:${port}/get_metrics`
+    )
+    logger.info(`Prepared workflow telemetry data to send: ${JSON.stringify(response.data)}`)
+  } catch (error: any) {
+    logger.error('Unable to send stat collector result')
+    logger.error(error)
+  }
+}

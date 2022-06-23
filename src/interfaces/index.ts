@@ -3,6 +3,12 @@ export interface JobInfo {
     readonly name?: string
 }
 
+export interface MetricWorkflowData {
+    readonly version: string
+    readonly data: Map<string, any>
+    readonly type: string
+}
+
 export interface CPUStats {
     readonly time: number
     readonly totalLoad: number
