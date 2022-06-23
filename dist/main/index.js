@@ -87814,8 +87814,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setServerPort = void 0;
+exports.setServerPort = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
 const logger = __importStar(__webpack_require__(4636));
+const core = __importStar(__webpack_require__(2186));
+exports.WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
 function setServerPort() {
     return __awaiter(this, void 0, void 0, function* () {
         var portfinder = __webpack_require__(147);
@@ -87823,6 +87825,7 @@ function setServerPort() {
         if (!port) {
             process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield portfinder.getPortPromise();
         }
+        core.saveState(exports.WORKFLOW_TELEMETRY_SERVER_PORT, process.env.WORKFLOW_TELEMETRY_SERVER_PORT);
         logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
     });
 }
