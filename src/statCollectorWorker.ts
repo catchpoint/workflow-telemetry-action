@@ -143,10 +143,10 @@ async function collectStats(triggeredFromScheduler: boolean = true) {
 
     const promises: Promise<any>[] = []
 
-    promises.push(collectCPUStats(statCollectTime, timeInterval))
-    promises.push(collectMemoryStats(statCollectTime, timeInterval))
-    promises.push(collectNetworkStats(statCollectTime, timeInterval))
-    promises.push(collectDiskStats(statCollectTime, timeInterval))
+    promises.push(await collectCPUStats(statCollectTime, timeInterval))
+    promises.push(await collectMemoryStats(statCollectTime, timeInterval))
+    promises.push(await collectNetworkStats(statCollectTime, timeInterval))
+    promises.push(await collectDiskStats(statCollectTime, timeInterval))
 
     return promises
   } finally {

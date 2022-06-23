@@ -17528,10 +17528,10 @@ function collectStats(triggeredFromScheduler = true) {
                 : 0;
             statCollectTime = currentTime;
             const promises = [];
-            promises.push(collectCPUStats(statCollectTime, timeInterval));
-            promises.push(collectMemoryStats(statCollectTime, timeInterval));
-            promises.push(collectNetworkStats(statCollectTime, timeInterval));
-            promises.push(collectDiskStats(statCollectTime, timeInterval));
+            promises.push(yield collectCPUStats(statCollectTime, timeInterval));
+            promises.push(yield collectMemoryStats(statCollectTime, timeInterval));
+            promises.push(yield collectNetworkStats(statCollectTime, timeInterval));
+            promises.push(yield collectDiskStats(statCollectTime, timeInterval));
             return promises;
         }
         finally {
