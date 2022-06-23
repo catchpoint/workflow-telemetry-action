@@ -87405,9 +87405,9 @@ const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
 function triggerStatCollect(port) {
     return __awaiter(this, void 0, void 0, function* () {
-        logger.debug('Triggering stat collect ...');
+        logger.info('Triggering stat collect ...');
         const response = yield axios_1.default.post(`http://localhost:${port}/collect`);
-        logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
+        logger.info(`Triggered stat collect: ${JSON.stringify(response.data)}`);
     });
 }
 function reportWorkflowMetrics(port) {

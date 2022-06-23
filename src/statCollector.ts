@@ -21,11 +21,11 @@ const { pull_request } = github.context.payload
 const { workflow, job, repo, runId, sha } = github.context
 
 async function triggerStatCollect(port: number): Promise<void> {
-  logger.debug('Triggering stat collect ...')
+  logger.info('Triggering stat collect ...')
   const response = await axios.post(
       `http://localhost:${port}/collect`
   )
-  logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
+  logger.info(`Triggered stat collect: ${JSON.stringify(response.data)}`)
 }
 
 async function reportWorkflowMetrics(port: number): Promise<void> {
