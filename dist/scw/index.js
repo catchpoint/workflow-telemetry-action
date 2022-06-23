@@ -24850,6 +24850,7 @@ function startHttpServer() {
                 case '/get_metrics': {
                     if (request.method === 'POST') {
                         yield collectMetrics();
+                        logger.info(`Collected metrics: ${metricWorkflowData}`);
                         response.end(JSON.stringify(metricWorkflowData));
                     }
                     else {
