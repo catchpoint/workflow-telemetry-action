@@ -87787,7 +87787,7 @@ function sendData(port) {
                 logger.info(`
         type: ${element.type},
         version: ${element.version},
-        data: ${element.data}
+        data: ${JSON.stringify(element.data)}
       `);
             });
         }
