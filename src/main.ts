@@ -7,7 +7,7 @@ import { setServerPort } from './utils';
 async function run(): Promise<void> {
   try {
     logger.info(`Initializing ...`)
-    setServerPort();
+    await setServerPort();
     // Start stat collector
     await statCollector.start()
     // Start process tracer
