@@ -14,8 +14,8 @@ import {
   ProcessedStats, StackedAreaGraphOptions
 } from './interfaces';
 import * as logger from './logger';
+import { SERVER_PORT as STAT_SERVER_PORT } from './utils';
 
-const STAT_SERVER_PORT: number = 7777
 const PAGE_SIZE: number = 100
 
 const { pull_request } = github.context.payload

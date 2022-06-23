@@ -80568,14 +80568,14 @@ const core = __importStar(__webpack_require__(2186));
 const action_1 = __webpack_require__(1231);
 const github = __importStar(__webpack_require__(5438));
 const logger = __importStar(__webpack_require__(4636));
-const STAT_SERVER_PORT = 7777;
+const utils_1 = __webpack_require__(1314);
 const PAGE_SIZE = 100;
 const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
 function triggerStatCollect() {
     return __awaiter(this, void 0, void 0, function* () {
         logger.debug('Triggering stat collect ...');
-        const response = yield axios_1.default.post(`http://localhost:${STAT_SERVER_PORT}/collect`);
+        const response = yield axios_1.default.post(`http://localhost:${utils_1.SERVER_PORT}/collect`);
         logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
     });
 }
@@ -80723,7 +80723,7 @@ function getCPUStats() {
         let userLoadX = [];
         let systemLoadX = [];
         logger.debug('Getting CPU stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/cpu`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/cpu`);
         logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             userLoadX.push({
@@ -80743,7 +80743,7 @@ function getMemoryStats() {
         let activeMemoryX = [];
         let availableMemoryX = [];
         logger.debug('Getting memory stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/memory`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/memory`);
         logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             activeMemoryX.push({
@@ -80763,7 +80763,7 @@ function getNetworkStats() {
         let networkReadX = [];
         let networkWriteX = [];
         logger.debug('Getting network stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/network`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/network`);
         logger.debug(`Got network stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             networkReadX.push({
@@ -80783,7 +80783,7 @@ function getDiskStats() {
         let diskReadX = [];
         let diskWriteX = [];
         logger.debug('Getting disk stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/disk`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/disk`);
         logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             diskReadX.push({

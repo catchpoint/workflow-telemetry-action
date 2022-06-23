@@ -41059,6 +41059,57 @@ exports.j = getProxyForUrl;
 
 /***/ }),
 
+/***/ 6199:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var net = __webpack_require__(1631);
+
+var random_port = function() {
+    var cb,
+        opts = {};
+
+    if (arguments.length == 0) {
+        throw "no callback";
+    }
+    else if (arguments.length == 1) {
+        cb = arguments[0];
+    }
+    else {
+        opts = arguments[0];
+        cb = arguments[arguments.length - 1];
+    }
+
+    if (typeof cb != 'function') {
+        throw "callback is not a function";
+    }
+
+    if (typeof opts != 'object') {
+        throw "options is not a object";
+    }
+
+    var from = opts.from > 0 ? opts.from : 15000,
+        range = opts.range > 0 ? opts.range : 100,
+        port = from + ~~(Math.random() * range);
+
+    /** @todo only root can listen to ports less than 1024 */
+
+    var server = net.createServer();
+    server.listen(port, function (err) {
+        server.once('close', function () {
+            cb(port);
+        });
+        server.close();
+    });
+    server.on('error', function (err) {
+        random_port(opts, cb);
+    });
+};
+
+module.exports = random_port;
+
+
+/***/ }),
+
 /***/ 7742:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -80519,14 +80570,14 @@ const core = __importStar(__webpack_require__(2186));
 const action_1 = __webpack_require__(1231);
 const github = __importStar(__webpack_require__(5438));
 const logger = __importStar(__webpack_require__(4636));
-const STAT_SERVER_PORT = 7777;
+const utils_1 = __webpack_require__(1314);
 const PAGE_SIZE = 100;
 const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
 function triggerStatCollect() {
     return __awaiter(this, void 0, void 0, function* () {
         logger.debug('Triggering stat collect ...');
-        const response = yield axios_1.default.post(`http://localhost:${STAT_SERVER_PORT}/collect`);
+        const response = yield axios_1.default.post(`http://localhost:${utils_1.SERVER_PORT}/collect`);
         logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
     });
 }
@@ -80674,7 +80725,7 @@ function getCPUStats() {
         let userLoadX = [];
         let systemLoadX = [];
         logger.debug('Getting CPU stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/cpu`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/cpu`);
         logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             userLoadX.push({
@@ -80694,7 +80745,7 @@ function getMemoryStats() {
         let activeMemoryX = [];
         let availableMemoryX = [];
         logger.debug('Getting memory stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/memory`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/memory`);
         logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             activeMemoryX.push({
@@ -80714,7 +80765,7 @@ function getNetworkStats() {
         let networkReadX = [];
         let networkWriteX = [];
         logger.debug('Getting network stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/network`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/network`);
         logger.debug(`Got network stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             networkReadX.push({
@@ -80734,7 +80785,7 @@ function getDiskStats() {
         let diskReadX = [];
         let diskWriteX = [];
         logger.debug('Getting disk stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/disk`);
+        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/disk`);
         logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             diskReadX.push({
@@ -80892,6 +80943,33 @@ function report() {
     });
 }
 exports.report = report;
+
+
+/***/ }),
+
+/***/ 1314:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.setServerPort = exports.SERVER_PORT = void 0;
+var random_port = __webpack_require__(6199);
+function setServerPort() {
+    return __awaiter(this, void 0, void 0, function* () {
+        exports.SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || (yield random_port());
+    });
+}
+exports.setServerPort = setServerPort;
 
 
 /***/ }),

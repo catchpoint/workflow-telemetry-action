@@ -1668,6 +1668,57 @@ exports.checkBypass = checkBypass;
 
 /***/ }),
 
+/***/ 199:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var net = __webpack_require__(631);
+
+var random_port = function() {
+    var cb,
+        opts = {};
+
+    if (arguments.length == 0) {
+        throw "no callback";
+    }
+    else if (arguments.length == 1) {
+        cb = arguments[0];
+    }
+    else {
+        opts = arguments[0];
+        cb = arguments[arguments.length - 1];
+    }
+
+    if (typeof cb != 'function') {
+        throw "callback is not a function";
+    }
+
+    if (typeof opts != 'object') {
+        throw "options is not a object";
+    }
+
+    var from = opts.from > 0 ? opts.from : 15000,
+        range = opts.range > 0 ? opts.range : 100,
+        port = from + ~~(Math.random() * range);
+
+    /** @todo only root can listen to ports less than 1024 */
+
+    var server = net.createServer();
+    server.listen(port, function (err) {
+        server.once('close', function () {
+            cb(port);
+        });
+        server.close();
+    });
+    server.on('error', function (err) {
+        random_port(opts, cb);
+    });
+};
+
+module.exports = random_port;
+
+
+/***/ }),
+
 /***/ 112:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -17428,12 +17479,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const http_1 = __webpack_require__(605);
 const systeminformation_1 = __importDefault(__webpack_require__(284));
 const logger = __importStar(__webpack_require__(636));
+const utils_1 = __webpack_require__(314);
 const STATS_FREQ = parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000;
 const SERVER_HOST = 'localhost';
 // TODO
 // It is better to find an available/free port automatically and use it.
 // Then the post script (`post.ts`) needs to know the selected port.
-const SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777;
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
 ///////////////////////////
@@ -17615,8 +17666,8 @@ function startHttpServer() {
             }));
         }
     }));
-    server.listen(SERVER_PORT, SERVER_HOST, () => {
-        logger.info(`Stat server listening on port ${SERVER_PORT}`);
+    server.listen(utils_1.SERVER_PORT, SERVER_HOST, () => {
+        logger.info(`Stat server listening on port ${utils_1.SERVER_PORT}`);
     });
 }
 // Init                  //
@@ -17630,6 +17681,33 @@ function init() {
 }
 init();
 ///////////////////////////
+
+
+/***/ }),
+
+/***/ 314:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.setServerPort = exports.SERVER_PORT = void 0;
+var random_port = __webpack_require__(199);
+function setServerPort() {
+    return __awaiter(this, void 0, void 0, function* () {
+        exports.SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || (yield random_port());
+    });
+}
+exports.setServerPort = setServerPort;
 
 
 /***/ }),
