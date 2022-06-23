@@ -5,7 +5,7 @@ export interface JobInfo {
 
 export interface MetricWorkflowData {
     readonly version: string
-    readonly data: Map<string, any>
+    readonly data: Object
     readonly type: string
 }
 

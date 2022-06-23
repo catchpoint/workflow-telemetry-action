@@ -467,16 +467,10 @@ export async function report(port:number): Promise<void> {
 export async function sendData(port: number): Promise<void> {
   logger.info(`Send stat collector result ...`)
   try {
-    const response = await axios.post(
+    const response = JSON.parse(await axios.post(
         `http://localhost:${port}/get_metrics`
-    )
-    response.data.forEach((element: MetricWorkflowData) => {
-      logger.info(`
-        type: ${element.type},
-        version: ${element.version},
-        data: ${[...element.data]}
-      `)
-    });
+    ))
+    logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
   } catch (error: any) {
     logger.error('Unable to send stat collector result')
     logger.error(error)

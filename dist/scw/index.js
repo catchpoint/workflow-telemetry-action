@@ -24735,7 +24735,7 @@ function collectMetrics() {
                 const cpuMetric = {
                     type: "CPU",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
-                    data: new Map(Object.entries(cpuStats))
+                    data: cpuStats
                 };
                 metricWorkflowData.push(cpuMetric);
             }
@@ -24743,7 +24743,7 @@ function collectMetrics() {
                 const memoryMetric = {
                     type: "MEMORY",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
-                    data: new Map(Object.entries(memoryStats))
+                    data: memoryStats
                 };
                 metricWorkflowData.push(memoryMetric);
             }
@@ -24751,7 +24751,7 @@ function collectMetrics() {
                 const networkMetric = {
                     type: "NETWORK",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
-                    data: new Map(Object.entries(networkStats))
+                    data: networkStats
                 };
                 metricWorkflowData.push(networkMetric);
             }
@@ -24759,7 +24759,7 @@ function collectMetrics() {
                 const diskMetric = {
                     type: "DISK",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
-                    data: new Map(Object.entries(diskStats))
+                    data: diskStats
                 };
                 metricWorkflowData.push(diskMetric);
             }

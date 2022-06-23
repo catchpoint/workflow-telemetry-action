@@ -142,7 +142,7 @@ async function collectMetrics() {
       const cpuMetric: MetricWorkflowData = {
         type: "CPU",
         version: WORKFLOW_TELEMETRY_VERSION,
-        data: new Map<string, any>(Object.entries(cpuStats))
+        data: cpuStats
       }
       metricWorkflowData.push(cpuMetric);
     }
@@ -151,7 +151,7 @@ async function collectMetrics() {
       const memoryMetric: MetricWorkflowData = {
         type: "MEMORY",
         version: WORKFLOW_TELEMETRY_VERSION,
-        data: new Map<string, any>(Object.entries(memoryStats))
+        data: memoryStats
       }
       metricWorkflowData.push(memoryMetric);
     }
@@ -160,7 +160,7 @@ async function collectMetrics() {
       const networkMetric: MetricWorkflowData = {
         type: "NETWORK",
         version: WORKFLOW_TELEMETRY_VERSION,
-        data: new Map<string, any>(Object.entries(networkStats))
+        data: networkStats
       }
       metricWorkflowData.push(networkMetric);
     }
@@ -170,7 +170,7 @@ async function collectMetrics() {
       const diskMetric: MetricWorkflowData = {
         type: "DISK",
         version: WORKFLOW_TELEMETRY_VERSION,
-        data: new Map<string, any>(Object.entries(diskStats))
+        data: diskStats
       }
       metricWorkflowData.push(diskMetric);
     }

@@ -87782,14 +87782,8 @@ function sendData(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Send stat collector result ...`);
         try {
-            const response = yield axios_1.default.post(`http://localhost:${port}/get_metrics`);
-            response.data.forEach((element) => {
-                logger.info(`
-        type: ${element.type},
-        version: ${element.version},
-        data: ${[...element.data]}
-      `);
-            });
+            const response = JSON.parse(yield axios_1.default.post(`http://localhost:${port}/get_metrics`));
+            logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
         }
         catch (error) {
             logger.error('Unable to send stat collector result');
