@@ -80989,7 +80989,9 @@ function setServerPort() {
         const random_port = __webpack_require__(6199);
         const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
         if (!port) {
-            process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield random_port();
+            random_port((port) => {
+                process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = port.toString();
+            });
         }
         logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
     });
