@@ -87821,7 +87821,7 @@ function setServerPort() {
         var portfinder = __webpack_require__(147);
         const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
         if (!port) {
-            process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield portfinder.getPort();
+            process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield portfinder.getPortPromise();
         }
         logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
     });
