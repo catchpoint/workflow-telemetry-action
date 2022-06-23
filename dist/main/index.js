@@ -41059,6 +41059,57 @@ exports.j = getProxyForUrl;
 
 /***/ }),
 
+/***/ 6199:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var net = __webpack_require__(1631);
+
+var random_port = function() {
+    var cb,
+        opts = {};
+
+    if (arguments.length == 0) {
+        throw "no callback";
+    }
+    else if (arguments.length == 1) {
+        cb = arguments[0];
+    }
+    else {
+        opts = arguments[0];
+        cb = arguments[arguments.length - 1];
+    }
+
+    if (typeof cb != 'function') {
+        throw "callback is not a function";
+    }
+
+    if (typeof opts != 'object') {
+        throw "options is not a object";
+    }
+
+    var from = opts.from > 0 ? opts.from : 15000,
+        range = opts.range > 0 ? opts.range : 100,
+        port = from + ~~(Math.random() * range);
+
+    /** @todo only root can listen to ports less than 1024 */
+
+    var server = net.createServer();
+    server.listen(port, function (err) {
+        server.once('close', function () {
+            cb(port);
+        });
+        server.close();
+    });
+    server.on('error', function (err) {
+        random_port(opts, cb);
+    });
+};
+
+module.exports = random_port;
+
+
+/***/ }),
+
 /***/ 7742:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -80081,10 +80132,12 @@ const core = __importStar(__webpack_require__(2186));
 const statCollector = __importStar(__webpack_require__(6451));
 const processTracer = __importStar(__webpack_require__(7728));
 const logger = __importStar(__webpack_require__(4636));
+const utils_1 = __webpack_require__(1314);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             logger.info(`Initializing ...`);
+            (0, utils_1.setServerPort)();
             // Start stat collector
             yield statCollector.start();
             // Start process tracer
@@ -80887,6 +80940,50 @@ function report(port) {
     });
 }
 exports.report = report;
+
+
+/***/ }),
+
+/***/ 1314:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.setServerPort = void 0;
+const logger = __importStar(__webpack_require__(4636));
+function setServerPort() {
+    const random_port = __webpack_require__(6199);
+    const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
+    if (!port) {
+        process.env.WORKFLOW_TELEMETRY_SERVER_PORT = random_port();
+    }
+    logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
+}
+exports.setServerPort = setServerPort;
 
 
 /***/ }),

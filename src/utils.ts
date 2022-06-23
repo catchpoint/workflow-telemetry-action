@@ -1,8 +1,10 @@
 import * as logger from './logger';
-export let SERVER_PORT: number;
 
 export function setServerPort() {
     const random_port = require('random-port');
-    SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || random_port();
-    logger.info(`Random port is: ${SERVER_PORT}`);
+    const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
+    if(!port) {
+        process.env.WORKFLOW_TELEMETRY_SERVER_PORT = random_port();
+    }
+    logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
 }
