@@ -474,7 +474,7 @@ export async function sendData(port: number): Promise<void> {
       logger.info(`
         type: ${element.type},
         version: ${element.version},
-        data: ${[...element.data.entries()]}
+        data: ${[...element.data]}
       `)
     });
   } catch (error: any) {
