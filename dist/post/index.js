@@ -87783,7 +87783,7 @@ function sendData(port) {
         logger.info(`Send stat collector result ...`);
         try {
             const response = yield axios_1.default.post(`http://localhost:${port}/get_metrics`);
-            logger.info(`Sended stat data: ${response.data}`);
+            logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
         }
         catch (error) {
             logger.error('Unable to send stat collector result');

@@ -470,7 +470,7 @@ export async function sendData(port: number): Promise<void> {
     const response = await axios.post(
         `http://localhost:${port}/get_metrics`
     )
-    logger.info(`Sended stat data: ${response.data}`);
+    logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
   } catch (error: any) {
     logger.error('Unable to send stat collector result')
     logger.error(error)

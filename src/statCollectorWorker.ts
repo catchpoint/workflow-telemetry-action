@@ -261,7 +261,6 @@ function startHttpServer() {
           case '/get_metrics': {
             if (request.method === 'POST') {
               await collectMetrics()
-              logger.info(`Collected metrics: ${metricWorkflowData}`);
               response.end(JSON.stringify(metricWorkflowData))
             } else {
               response.statusCode = 405
