@@ -41059,57 +41059,6 @@ exports.j = getProxyForUrl;
 
 /***/ }),
 
-/***/ 6199:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var net = __webpack_require__(1631);
-
-var random_port = function() {
-    var cb,
-        opts = {};
-
-    if (arguments.length == 0) {
-        throw "no callback";
-    }
-    else if (arguments.length == 1) {
-        cb = arguments[0];
-    }
-    else {
-        opts = arguments[0];
-        cb = arguments[arguments.length - 1];
-    }
-
-    if (typeof cb != 'function') {
-        throw "callback is not a function";
-    }
-
-    if (typeof opts != 'object') {
-        throw "options is not a object";
-    }
-
-    var from = opts.from > 0 ? opts.from : 15000,
-        range = opts.range > 0 ? opts.range : 100,
-        port = from + ~~(Math.random() * range);
-
-    /** @todo only root can listen to ports less than 1024 */
-
-    var server = net.createServer();
-    server.listen(port, function (err) {
-        server.once('close', function () {
-            cb(port);
-        });
-        server.close();
-    });
-    server.on('error', function (err) {
-        random_port(opts, cb);
-    });
-};
-
-module.exports = random_port;
-
-
-/***/ }),
-
 /***/ 7742:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -80132,16 +80081,18 @@ const core = __importStar(__webpack_require__(2186));
 const statCollector = __importStar(__webpack_require__(6451));
 const processTracer = __importStar(__webpack_require__(7728));
 const logger = __importStar(__webpack_require__(4636));
+const utils_1 = __webpack_require__(1314);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             logger.info(`Finishing ...`);
+            logger.info(`SERVER_PORT: ${utils_1.SERVER_PORT}`);
             // Finish stat collector
-            yield statCollector.finish();
+            yield statCollector.finish(utils_1.SERVER_PORT);
             // Finish process tracer
             yield processTracer.finish();
             // Report stat collector
-            yield statCollector.report();
+            yield statCollector.report(utils_1.SERVER_PORT);
             // Report process tracer
             yield processTracer.report();
             logger.info(`Finish completed`);
@@ -80570,24 +80521,23 @@ const core = __importStar(__webpack_require__(2186));
 const action_1 = __webpack_require__(1231);
 const github = __importStar(__webpack_require__(5438));
 const logger = __importStar(__webpack_require__(4636));
-const utils_1 = __webpack_require__(1314);
 const PAGE_SIZE = 100;
 const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
-function triggerStatCollect() {
+function triggerStatCollect(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.debug('Triggering stat collect ...');
-        const response = yield axios_1.default.post(`http://localhost:${utils_1.SERVER_PORT}/collect`);
+        const response = yield axios_1.default.post(`http://localhost:${port}/collect`);
         logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
     });
 }
-function reportWorkflowMetrics() {
+function reportWorkflowMetrics(port) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        const { userLoadX, systemLoadX } = yield getCPUStats();
-        const { activeMemoryX, availableMemoryX } = yield getMemoryStats();
-        const { networkReadX, networkWriteX } = yield getNetworkStats();
-        const { diskReadX, diskWriteX } = yield getDiskStats();
+        const { userLoadX, systemLoadX } = yield getCPUStats(port);
+        const { activeMemoryX, availableMemoryX } = yield getMemoryStats(port);
+        const { networkReadX, networkWriteX } = yield getNetworkStats(port);
+        const { diskReadX, diskWriteX } = yield getDiskStats(port);
         const cpuLoad = userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
             ? (yield getStackedAreaGraph({
                 label: 'CPU Load (%)',
@@ -80720,12 +80670,12 @@ function reportWorkflowMetrics() {
         }
     });
 }
-function getCPUStats() {
+function getCPUStats(port) {
     return __awaiter(this, void 0, void 0, function* () {
         let userLoadX = [];
         let systemLoadX = [];
         logger.debug('Getting CPU stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/cpu`);
+        const response = yield axios_1.default.get(`http://localhost:${port}/cpu`);
         logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             userLoadX.push({
@@ -80740,12 +80690,12 @@ function getCPUStats() {
         return { userLoadX, systemLoadX };
     });
 }
-function getMemoryStats() {
+function getMemoryStats(port) {
     return __awaiter(this, void 0, void 0, function* () {
         let activeMemoryX = [];
         let availableMemoryX = [];
         logger.debug('Getting memory stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/memory`);
+        const response = yield axios_1.default.get(`http://localhost:${port}/memory`);
         logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             activeMemoryX.push({
@@ -80760,12 +80710,12 @@ function getMemoryStats() {
         return { activeMemoryX, availableMemoryX };
     });
 }
-function getNetworkStats() {
+function getNetworkStats(port) {
     return __awaiter(this, void 0, void 0, function* () {
         let networkReadX = [];
         let networkWriteX = [];
         logger.debug('Getting network stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/network`);
+        const response = yield axios_1.default.get(`http://localhost:${port}/network`);
         logger.debug(`Got network stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             networkReadX.push({
@@ -80780,12 +80730,12 @@ function getNetworkStats() {
         return { networkReadX, networkWriteX };
     });
 }
-function getDiskStats() {
+function getDiskStats(port) {
     return __awaiter(this, void 0, void 0, function* () {
         let diskReadX = [];
         let diskWriteX = [];
         logger.debug('Getting disk stats ...');
-        const response = yield axios_1.default.get(`http://localhost:${utils_1.SERVER_PORT}/disk`);
+        const response = yield axios_1.default.get(`http://localhost:${port}/disk`);
         logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`);
         response.data.forEach((element) => {
             diskReadX.push({
@@ -80914,12 +80864,12 @@ function start() {
     });
 }
 exports.start = start;
-function finish() {
+function finish(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Finishing stat collector ...`);
         try {
             // Trigger stat collect, so we will have remaining stats since the latest schedule
-            yield triggerStatCollect();
+            yield triggerStatCollect(port);
             logger.info(`Finished stat collector`);
         }
         catch (error) {
@@ -80929,11 +80879,11 @@ function finish() {
     });
 }
 exports.finish = finish;
-function report() {
+function report(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Reporting stat collector result ...`);
         try {
-            yield reportWorkflowMetrics();
+            yield reportWorkflowMetrics(port);
             logger.info(`Reported stat collector result`);
         }
         catch (error) {
@@ -80954,7 +80904,7 @@ exports.report = report;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.setServerPort = exports.SERVER_PORT = void 0;
-var random_port = __webpack_require__(6199);
+var random_port = __webpack_require__(2916);
 function setServerPort() {
     exports.SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || random_port();
 }
@@ -80983,6 +80933,14 @@ module.exports = eval("require")("encoding");
 /***/ ((module) => {
 
 module.exports = eval("require")("osx-temperature-sensor");
+
+
+/***/ }),
+
+/***/ 2916:
+/***/ ((module) => {
+
+module.exports = eval("require")("random-port");
 
 
 /***/ }),

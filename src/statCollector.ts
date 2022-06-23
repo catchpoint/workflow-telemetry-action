@@ -14,26 +14,25 @@ import {
   ProcessedStats, StackedAreaGraphOptions
 } from './interfaces';
 import * as logger from './logger';
-import { SERVER_PORT as STAT_SERVER_PORT } from './utils';
 
 const PAGE_SIZE: number = 100
 
 const { pull_request } = github.context.payload
 const { workflow, job, repo, runId, sha } = github.context
 
-async function triggerStatCollect(): Promise<void> {
+async function triggerStatCollect(port: number): Promise<void> {
   logger.debug('Triggering stat collect ...')
   const response = await axios.post(
-      `http://localhost:${STAT_SERVER_PORT}/collect`
+      `http://localhost:${port}/collect`
   )
   logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
 }
 
-async function reportWorkflowMetrics(): Promise<void> {
-  const { userLoadX, systemLoadX } = await getCPUStats()
-  const { activeMemoryX, availableMemoryX } = await getMemoryStats()
-  const { networkReadX, networkWriteX } = await getNetworkStats()
-  const { diskReadX, diskWriteX } = await getDiskStats()
+async function reportWorkflowMetrics(port: number): Promise<void> {
+  const { userLoadX, systemLoadX } = await getCPUStats(port)
+  const { activeMemoryX, availableMemoryX } = await getMemoryStats(port)
+  const { networkReadX, networkWriteX } = await getNetworkStats(port)
+  const { diskReadX, diskWriteX } = await getDiskStats(port)
 
   const cpuLoad =
       userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
@@ -207,13 +206,13 @@ async function reportWorkflowMetrics(): Promise<void> {
   }
 }
 
-async function getCPUStats(): Promise<ProcessedCPUStats> {
+async function getCPUStats(port: number): Promise<ProcessedCPUStats> {
   let userLoadX: ProcessedStats[] = []
   let systemLoadX: ProcessedStats[] = []
 
   logger.debug('Getting CPU stats ...')
   const response = await axios.get(
-      `http://localhost:${STAT_SERVER_PORT}/cpu`
+      `http://localhost:${port}/cpu`
   )
   logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`)
 
@@ -232,13 +231,13 @@ async function getCPUStats(): Promise<ProcessedCPUStats> {
   return { userLoadX, systemLoadX }
 }
 
-async function getMemoryStats(): Promise<ProcessedMemoryStats> {
+async function getMemoryStats(port: number): Promise<ProcessedMemoryStats> {
   let activeMemoryX: ProcessedStats[] = []
   let availableMemoryX: ProcessedStats[] = []
 
   logger.debug('Getting memory stats ...')
   const response = await axios.get(
-      `http://localhost:${STAT_SERVER_PORT}/memory`
+      `http://localhost:${port}/memory`
   )
   logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`)
 
@@ -257,13 +256,13 @@ async function getMemoryStats(): Promise<ProcessedMemoryStats> {
   return { activeMemoryX, availableMemoryX }
 }
 
-async function getNetworkStats(): Promise<ProcessedNetworkStats> {
+async function getNetworkStats(port: number): Promise<ProcessedNetworkStats> {
   let networkReadX: ProcessedStats[] = []
   let networkWriteX: ProcessedStats[] = []
 
   logger.debug('Getting network stats ...')
   const response = await axios.get(
-      `http://localhost:${STAT_SERVER_PORT}/network`
+      `http://localhost:${port}/network`
   )
   logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
 
@@ -282,12 +281,12 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
   return { networkReadX, networkWriteX }
 }
 
-async function getDiskStats(): Promise<ProcessedDiskStats> {
+async function getDiskStats(port:number): Promise<ProcessedDiskStats> {
   let diskReadX: ProcessedStats[] = []
   let diskWriteX: ProcessedStats[] = []
 
   logger.debug('Getting disk stats ...')
-  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/disk`)
+  const response = await axios.get(`http://localhost:${port}/disk`)
   logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`)
 
   response.data.forEach((element: DiskStats) => {
@@ -437,12 +436,12 @@ export async function start(): Promise<void> {
   }
 }
 
-export async function finish(): Promise<void> {
+export async function finish(port: number): Promise<void> {
   logger.info(`Finishing stat collector ...`)
 
   try {
     // Trigger stat collect, so we will have remaining stats since the latest schedule
-    await triggerStatCollect()
+    await triggerStatCollect(port)
 
     logger.info(`Finished stat collector`)
   } catch (error: any) {
@@ -451,11 +450,11 @@ export async function finish(): Promise<void> {
   }
 }
 
-export async function report(): Promise<void> {
+export async function report(port:number): Promise<void> {
   logger.info(`Reporting stat collector result ...`)
 
   try {
-    await reportWorkflowMetrics()
+    await reportWorkflowMetrics(port)
 
     logger.info(`Reported stat collector result`)
   } catch (error: any) {
