@@ -7,7 +7,7 @@ import {
   DiskStats,
   NetworkStats,
 } from './interfaces'
-import { SERVER_PORT } from './utils'
+import { SERVER_PORT, setServerPort } from './utils'
 
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
@@ -238,6 +238,7 @@ function startHttpServer() {
 ///////////////////////////
 
 function init() {
+  setServerPort();
   expectedScheduleTime = Date.now()
 
   logger.info('Starting stat collector ...')
@@ -247,6 +248,6 @@ function init() {
   startHttpServer()
 }
 
-init()
+init();
 
 ///////////////////////////
