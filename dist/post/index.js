@@ -64467,6 +64467,8 @@ const axios_1 = __importDefault(__webpack_require__(6545));
 const action_1 = __webpack_require__(1231);
 const STAT_SERVER_PORT = 7777;
 const PAGE_SIZE = 100;
+const BLACK = '#000000';
+const WHITE = '#FFFFFF';
 const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
 function run() {
@@ -64480,9 +64482,22 @@ function run() {
             const { activeMemoryX, availableMemoryX } = yield getMemoryStats();
             const { networkReadX, networkWriteX } = yield getNetworkStats();
             const { diskReadX, diskWriteX } = yield getDiskStats();
+            const theme = core.getInput('theme', { required: false });
+            let axisColor = BLACK;
+            switch (theme) {
+                case 'light':
+                    axisColor = BLACK;
+                    break;
+                case 'dark':
+                    axisColor = WHITE;
+                    break;
+                default:
+                    core.warning(`Invalid theme: ${theme}`);
+            }
             const cpuLoad = userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
                 ? (yield getStackedAreaGraph({
                     label: 'CPU Load (%)',
+                    axisColor,
                     areas: [
                         {
                             label: 'User Load',
@@ -64500,6 +64515,7 @@ function run() {
             const memoryUsage = activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
                 ? (yield getStackedAreaGraph({
                     label: 'Memory Usage (MB)',
+                    axisColor,
                     areas: [
                         {
                             label: 'Used',
@@ -64517,6 +64533,7 @@ function run() {
             const networkIORead = networkReadX && networkReadX.length
                 ? (yield getLineGraph({
                     label: 'Network I/O Read (MB)',
+                    axisColor,
                     line: {
                         label: 'Read',
                         color: '#be4d25',
@@ -64527,6 +64544,7 @@ function run() {
             const networkIOWrite = networkWriteX && networkWriteX.length
                 ? (yield getLineGraph({
                     label: 'Network I/O Write (MB)',
+                    axisColor,
                     line: {
                         label: 'Write',
                         color: '#6c25be',
@@ -64537,6 +64555,7 @@ function run() {
             const diskIORead = diskReadX && diskReadX.length
                 ? (yield getLineGraph({
                     label: 'Disk I/O Read (MB)',
+                    axisColor,
                     line: {
                         label: 'Read',
                         color: '#be4d25',
@@ -64547,6 +64566,7 @@ function run() {
             const diskIOWrite = diskWriteX && diskWriteX.length
                 ? (yield getLineGraph({
                     label: 'Disk I/O Write (MB)',
+                    axisColor,
                     line: {
                         label: 'Write',
                         color: '#6c25be',
@@ -64711,10 +64731,12 @@ function getLineGraph(options) {
                 width: 1000,
                 height: 500,
                 xAxis: {
-                    label: 'Time'
+                    label: 'Time',
+                    color: options.axisColor
                 },
                 yAxis: {
-                    label: options.label
+                    label: options.label,
+                    color: options.axisColor
                 },
                 timeTicks: {
                     unit: 'auto'
@@ -64733,10 +64755,12 @@ function getStackedAreaGraph(options) {
                 width: 1000,
                 height: 500,
                 xAxis: {
-                    label: 'Time'
+                    label: 'Time',
+                    color: options.axisColor
                 },
                 yAxis: {
-                    label: options.label
+                    label: options.label,
+                    color: options.axisColor
                 },
                 timeTicks: {
                     unit: 'auto'

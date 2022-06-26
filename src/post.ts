@@ -23,6 +23,9 @@ import {
 const STAT_SERVER_PORT: number = 7777
 const PAGE_SIZE: number = 100
 
+const BLACK: string = '#000000'
+const WHITE: string = '#FFFFFF'
+
 const { pull_request } = github.context.payload
 const { workflow, job, repo, runId, sha } = github.context
 
@@ -38,10 +41,24 @@ async function run(): Promise<void> {
     const { networkReadX, networkWriteX } = await getNetworkStats()
     const { diskReadX, diskWriteX } = await getDiskStats()
 
+    const theme: string = core.getInput('theme', { required: false })
+    let axisColor = BLACK
+    switch (theme) {
+      case 'light':
+        axisColor = BLACK
+        break
+      case 'dark':
+        axisColor = WHITE
+        break
+      default:
+        core.warning(`Invalid theme: ${theme}`)
+    }
+
     const cpuLoad =
         userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
           ? (await getStackedAreaGraph({
               label: 'CPU Load (%)',
+              axisColor,
               areas: [
                 {
                   label: 'User Load',
@@ -61,6 +78,7 @@ async function run(): Promise<void> {
         activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
           ? (await getStackedAreaGraph({
               label: 'Memory Usage (MB)',
+              axisColor,
               areas: [
                 {
                   label: 'Used',
@@ -80,6 +98,7 @@ async function run(): Promise<void> {
         networkReadX && networkReadX.length
             ? (await getLineGraph({
                 label: 'Network I/O Read (MB)',
+                axisColor,
                 line: {
                   label: 'Read',
                   color: '#be4d25',
@@ -92,6 +111,7 @@ async function run(): Promise<void> {
         networkWriteX && networkWriteX.length
           ? (await getLineGraph({
               label: 'Network I/O Write (MB)',
+              axisColor,
               line: {
                 label: 'Write',
                 color: '#6c25be',
@@ -104,6 +124,7 @@ async function run(): Promise<void> {
         diskReadX && diskReadX.length
           ? (await getLineGraph({
               label: 'Disk I/O Read (MB)',
+              axisColor,
               line: {
                 label: 'Read',
                 color: '#be4d25',
@@ -116,6 +137,7 @@ async function run(): Promise<void> {
         diskWriteX && diskWriteX.length
         ? (await getLineGraph({
             label: 'Disk I/O Write (MB)',
+            axisColor,
             line: {
               label: 'Write',
               color: '#6c25be',
@@ -327,10 +349,12 @@ async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
       width: 1000,
       height: 500,
       xAxis: {
-        label: 'Time'
+        label: 'Time',
+        color: options.axisColor
       },
       yAxis: {
-        label: options.label
+        label: options.label,
+        color: options.axisColor
       },
       timeTicks: {
         unit: 'auto'
@@ -353,10 +377,12 @@ async function getStackedAreaGraph(options: StackedAreaGraphOptions): Promise<Gr
       width: 1000,
       height: 500,
       xAxis: {
-        label: 'Time'
+        label: 'Time',
+        color: options.axisColor
       },
       yAxis: {
-        label: options.label
+        label: options.label,
+        color: options.axisColor
       },
       timeTicks: {
         unit: 'auto'
