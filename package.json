@@ -1,8 +1,8 @@
 {
-  "name": "workflow-metrics-action",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Workflow Metrics Action",
+  "name": "workflow-telemetry-action",
+  "version": "1.3.1",
+  "private": false,
+  "description": "Github action to collect metrics (CPU, memory, I/O, etc ...) from your workflows to help you debug and optimize your CI/CD pipeline",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -18,14 +18,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/serkan-ozal/workflow-metrics-action.git"
+    "url": "git+https://github.com/thundra-io/workflow-telemetry-action.git"
   },
   "keywords": [
+    "monitoring",
+    "observability",
+    "telemetry",
+    "github",
     "actions",
-    "node",
-    "setup"
+    "workflow",
+    "ci-cd"
   ],
-  "author": "Serkan Özal <serkanozal86@gmail.com>",
+  "author": "Serkan Özal <serkan@thundra.io>",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.4.0",
