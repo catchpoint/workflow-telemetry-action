@@ -263,7 +263,7 @@ function startHttpServer() {
             break
           }
           case '/get_metrics': {
-            if (request.method === 'POST') {
+            if (request.method === 'GET') {
               await collectMetrics()
               response.end(JSON.stringify(metricWorkflowData))
             } else {
@@ -308,6 +308,6 @@ function init() {
   startHttpServer()
 }
 
-init();
+init()
 
 ///////////////////////////

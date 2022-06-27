@@ -467,7 +467,7 @@ export async function report(port:number): Promise<void> {
 export async function sendData(port: number): Promise<void> {
   logger.info(`Send stat collector result ...`)
   try {
-    const response = await axios.post(
+    const response = await axios.get(
         `http://localhost:${port}/get_metrics`
     )
     logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
