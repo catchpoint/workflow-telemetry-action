@@ -3,7 +3,7 @@ export interface JobInfo {
     readonly name?: string
 }
 
-export interface MetricWorkflowData {
+export interface WorkflowData {
     readonly version: string
     readonly data: Object
     readonly type: string

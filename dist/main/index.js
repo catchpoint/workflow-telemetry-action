@@ -87226,6 +87226,7 @@ const systeminformation_1 = __importDefault(__webpack_require__(9284));
 const sprintf_js_1 = __webpack_require__(3988);
 const procTraceParser_1 = __webpack_require__(9576);
 const logger = __importStar(__webpack_require__(4636));
+const utils_1 = __webpack_require__(1314);
 const PROC_TRACER_PID_KEY = 'PROC_TRACER_PID';
 const PROC_TRACER_OUTPUT_FILE_NAME = 'proc-trace.out';
 const PROC_TRACER_BINARY_NAME_UBUNTU_20 = 'proc-tracer_ubuntu_20';
@@ -87322,10 +87323,17 @@ function report() {
             });
             // TODO Send results to the Foresight backend
             const commandInfos = [];
+            const processInfos = [];
             commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s", "TIME", "NAME", "UID", "PID", "PPID", "START TIME", "DURATION (ms)", "EXIT CODE", "FILE NAME + ARGS"));
             for (let command of completedCommands) {
+                let processWorkflowData = {
+                    type: "Process",
+                    data: command,
+                    version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.PROCESS
+                };
                 commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s", command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
             }
+            yield sendProcessData(processInfos);
             const postContentItems = [
                 '',
                 '### Process Traces',
@@ -87347,6 +87355,18 @@ function report() {
     });
 }
 exports.report = report;
+function sendProcessData(processInfos) {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Send process result ...`);
+        try {
+            logger.info(`Sent process data: ${JSON.stringify(processInfos)}`);
+        }
+        catch (error) {
+            logger.error('Unable to send process result');
+            logger.error(error);
+        }
+    });
+}
 
 
 /***/ }),
@@ -87392,7 +87412,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sendData = exports.report = exports.finish = exports.start = void 0;
+exports.sendMetricData = exports.report = exports.finish = exports.start = void 0;
 const child_process_1 = __webpack_require__(3129);
 const path_1 = __importDefault(__webpack_require__(5622));
 const axios_1 = __importDefault(__webpack_require__(6545));
@@ -87772,7 +87792,7 @@ function report(port) {
     });
 }
 exports.report = report;
-function sendData(port) {
+function sendMetricData(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Send stat collector result ...`);
         try {
@@ -87785,7 +87805,7 @@ function sendData(port) {
         }
     });
 }
-exports.sendData = sendData;
+exports.sendMetricData = sendMetricData;
 
 
 /***/ }),
@@ -87828,11 +87848,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setServerPort = exports.WORKFLOW_TELEMETRY_VERSION = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
+exports.setServerPort = exports.WORKFLOW_TELEMETRY_VERSIONS = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
 const logger = __importStar(__webpack_require__(4636));
 const core = __importStar(__webpack_require__(2186));
 exports.WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
-exports.WORKFLOW_TELEMETRY_VERSION = "v1";
+exports.WORKFLOW_TELEMETRY_VERSIONS = {
+    METRIC: "v1",
+    PROCESS: "v1"
+};
 function setServerPort() {
     return __awaiter(this, void 0, void 0, function* () {
         var portfinder = __webpack_require__(147);

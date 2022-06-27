@@ -6,9 +6,9 @@ import {
   MemoryStats,
   DiskStats,
   NetworkStats,
-  MetricWorkflowData,
+  WorkflowData,
 } from './interfaces'
-import { WORKFLOW_TELEMETRY_VERSION } from './utils'
+import { WORKFLOW_TELEMETRY_VERSIONS } from './utils'
 
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
@@ -18,7 +18,7 @@ const SERVER_PORT: number = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT 
 let expectedScheduleTime: number = 0
 let statCollectTime: number = 0
 
-const metricWorkflowData: MetricWorkflowData[] = []
+const metricWorkflowData: WorkflowData[] = []
 
 ///////////////////////////
 
@@ -143,27 +143,27 @@ function collectDiskStats(
 async function collectMetrics() {
   try {
     for(const cpuStats of cpuStatsHistogram) {
-      const cpuMetric: MetricWorkflowData = {
+      const cpuMetric: WorkflowData = {
         type: "Metric",
-        version: WORKFLOW_TELEMETRY_VERSION,
+        version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: cpuStats
       }
       metricWorkflowData.push(cpuMetric);
     }
 
     for(const memoryStats of memoryStatsHistogram) {
-      const memoryMetric: MetricWorkflowData = {
+      const memoryMetric: WorkflowData = {
         type: "Metric",
-        version: WORKFLOW_TELEMETRY_VERSION,
+        version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: memoryStats
       }
       metricWorkflowData.push(memoryMetric);
     }
 
     for(const networkStats of networkStatsHistogram) {
-      const networkMetric: MetricWorkflowData = {
+      const networkMetric: WorkflowData = {
         type: "Metric",
-        version: WORKFLOW_TELEMETRY_VERSION,
+        version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: networkStats
       }
       metricWorkflowData.push(networkMetric);
@@ -171,9 +171,9 @@ async function collectMetrics() {
 
 
     for(const diskStats of diskStatsHistogram) {
-      const diskMetric: MetricWorkflowData = {
+      const diskMetric: WorkflowData = {
         type: "Metric",
-        version: WORKFLOW_TELEMETRY_VERSION,
+        version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: diskStats
       }
       metricWorkflowData.push(diskMetric);

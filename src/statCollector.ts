@@ -7,7 +7,7 @@ import * as github from '@actions/github';
 import {
   CPUStats, DiskStats, GraphResponse,
   JobInfo, LineGraphOptions,
-  MemoryStats, MetricWorkflowData, NetworkStats,
+  MemoryStats, WorkflowData, NetworkStats,
   ProcessedCPUStats, ProcessedDiskStats,
   ProcessedMemoryStats,
   ProcessedNetworkStats,
@@ -464,7 +464,7 @@ export async function report(port:number): Promise<void> {
 }
 
 
-export async function sendData(port: number): Promise<void> {
+export async function sendMetricData(port: number): Promise<void> {
   logger.info(`Send stat collector result ...`)
   try {
     const response = await axios.get(

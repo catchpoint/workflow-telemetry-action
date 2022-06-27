@@ -4,8 +4,9 @@ import * as core from '@actions/core';
 import si from 'systeminformation'
 import { sprintf } from 'sprintf-js';
 import { parse } from './procTraceParser';
-import { CompletedCommand } from "./interfaces";
+import { CompletedCommand, WorkflowData } from "./interfaces";
 import * as logger from './logger';
+import { WORKFLOW_TELEMETRY_VERSIONS } from './utils';
 
 const PROC_TRACER_PID_KEY: string = 'PROC_TRACER_PID'
 const PROC_TRACER_OUTPUT_FILE_NAME: string = 'proc-trace.out'
@@ -119,16 +120,22 @@ export async function report(): Promise<void> {
         // TODO Send results to the Foresight backend
 
         const commandInfos: string[] = []
+        const processInfos: WorkflowData[] = []
         commandInfos.push(sprintf(
             "%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s",
             "TIME", "NAME", "UID", "PID", "PPID", "START TIME", "DURATION (ms)", "EXIT CODE", "FILE NAME + ARGS"))
         for (let command of completedCommands) {
+            let processWorkflowData = {
+                type: "Process",
+                data: command,
+                version: WORKFLOW_TELEMETRY_VERSIONS.PROCESS
+            }
             commandInfos.push(sprintf(
                 "%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s",
                 command.ts, command.name, command.uid, command.pid, command.ppid,
                 command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')))
         }
-
+        await sendProcessData(processInfos);
         const postContentItems: string[] = [
             '',
             '### Process Traces',
@@ -149,3 +156,14 @@ export async function report(): Promise<void> {
         logger.error(error)
     }
 }
+
+
+async function sendProcessData(processInfos: WorkflowData[]): Promise<void> {
+    logger.info(`Send process result ...`)
+    try {
+      logger.info(`Sent process data: ${JSON.stringify(processInfos)}`);
+    } catch (error: any) {
+      logger.error('Unable to send process result')
+      logger.error(error)
+    }
+  }

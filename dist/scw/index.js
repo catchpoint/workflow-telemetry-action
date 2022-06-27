@@ -24738,7 +24738,7 @@ function collectMetrics() {
             for (const cpuStats of cpuStatsHistogram) {
                 const cpuMetric = {
                     type: "Metric",
-                    version: utils_1.WORKFLOW_TELEMETRY_VERSION,
+                    version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: cpuStats
                 };
                 metricWorkflowData.push(cpuMetric);
@@ -24746,7 +24746,7 @@ function collectMetrics() {
             for (const memoryStats of memoryStatsHistogram) {
                 const memoryMetric = {
                     type: "Metric",
-                    version: utils_1.WORKFLOW_TELEMETRY_VERSION,
+                    version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: memoryStats
                 };
                 metricWorkflowData.push(memoryMetric);
@@ -24754,7 +24754,7 @@ function collectMetrics() {
             for (const networkStats of networkStatsHistogram) {
                 const networkMetric = {
                     type: "Metric",
-                    version: utils_1.WORKFLOW_TELEMETRY_VERSION,
+                    version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: networkStats
                 };
                 metricWorkflowData.push(networkMetric);
@@ -24762,7 +24762,7 @@ function collectMetrics() {
             for (const diskStats of diskStatsHistogram) {
                 const diskMetric = {
                     type: "Metric",
-                    version: utils_1.WORKFLOW_TELEMETRY_VERSION,
+                    version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: diskStats
                 };
                 metricWorkflowData.push(diskMetric);
@@ -24934,11 +24934,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setServerPort = exports.WORKFLOW_TELEMETRY_VERSION = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
+exports.setServerPort = exports.WORKFLOW_TELEMETRY_VERSIONS = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
 const logger = __importStar(__webpack_require__(4636));
 const core = __importStar(__webpack_require__(2186));
 exports.WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
-exports.WORKFLOW_TELEMETRY_VERSION = "v1";
+exports.WORKFLOW_TELEMETRY_VERSIONS = {
+    METRIC: "v1",
+    PROCESS: "v1"
+};
 function setServerPort() {
     return __awaiter(this, void 0, void 0, function* () {
         var portfinder = __webpack_require__(147);
