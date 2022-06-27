@@ -35,6 +35,7 @@ function collectCPUStats(
       .currentLoad()
       .then((data: si.Systeminformation.CurrentLoadData) => {
         const cpuStats: CPUStats = {
+          metricName: "CPU",
           time: statTime,
           totalLoad: data.currentLoad,
           userLoad: data.currentLoadUser,
@@ -62,6 +63,7 @@ function collectMemoryStats(
       .mem()
       .then((data: si.Systeminformation.MemData) => {
         const memoryStats: MemoryStats = {
+          metricName: "Memory",
           time: statTime,
           totalMemoryMb: data.total / 1024 / 1024,
           activeMemoryMb: data.active / 1024 / 1024,
@@ -95,6 +97,7 @@ function collectNetworkStats(
         totalTxSec += nsd.tx_sec
       }
       const networkStats: NetworkStats = {
+        metricName: "Network",
         time: statTime,
         rxMb: Math.floor((totalRxSec * (timeInterval / 1000)) / 1024 / 1024),
         txMb: Math.floor((totalTxSec * (timeInterval / 1000)) / 1024 / 1024)
@@ -123,6 +126,7 @@ function collectDiskStats(
       let rxSec = data.rx_sec ? data.rx_sec : 0
       let wxSec = data.wx_sec ? data.wx_sec : 0
       const diskStats: DiskStats = {
+        metricName: "Disk",
         time: statTime,
         rxMb: Math.floor((rxSec * (timeInterval / 1000)) / 1024 / 1024),
         wxMb: Math.floor((wxSec * (timeInterval / 1000)) / 1024 / 1024)
@@ -140,7 +144,7 @@ async function collectMetrics() {
   try {
     for(const cpuStats of cpuStatsHistogram) {
       const cpuMetric: MetricWorkflowData = {
-        type: "CPU",
+        type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSION,
         data: cpuStats
       }
@@ -149,7 +153,7 @@ async function collectMetrics() {
 
     for(const memoryStats of memoryStatsHistogram) {
       const memoryMetric: MetricWorkflowData = {
-        type: "MEMORY",
+        type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSION,
         data: memoryStats
       }
@@ -158,7 +162,7 @@ async function collectMetrics() {
 
     for(const networkStats of networkStatsHistogram) {
       const networkMetric: MetricWorkflowData = {
-        type: "NETWORK",
+        type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSION,
         data: networkStats
       }
@@ -168,7 +172,7 @@ async function collectMetrics() {
 
     for(const diskStats of diskStatsHistogram) {
       const diskMetric: MetricWorkflowData = {
-        type: "DISK",
+        type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSION,
         data: diskStats
       }

@@ -9,27 +9,29 @@ export interface MetricWorkflowData {
     readonly type: string
 }
 
-export interface CPUStats {
+export interface MetricStats {
     readonly time: number
+    readonly metricName: string
+}
+
+export interface CPUStats extends MetricStats {
     readonly totalLoad: number
     readonly userLoad: number
     readonly systemLoad: number
 }
 
-export interface MemoryStats {
-    readonly time: number
+export interface MemoryStats extends MetricStats {
     readonly totalMemoryMb: number
     readonly activeMemoryMb: number
     readonly availableMemoryMb: number
 }
 
-export interface NetworkStats {
-    readonly time: number
+export interface NetworkStats extends MetricStats {
     readonly rxMb: number
     readonly txMb: number
 }
 
-export interface DiskStats {
+export interface DiskStats extends MetricStats {
     readonly time: number
     readonly rxMb: number
     readonly wxMb: number

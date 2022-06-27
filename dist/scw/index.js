@@ -24651,6 +24651,7 @@ function collectCPUStats(statTime, timeInterval) {
         .currentLoad()
         .then((data) => {
         const cpuStats = {
+            metricName: "CPU",
             time: statTime,
             totalLoad: data.currentLoad,
             userLoad: data.currentLoadUser,
@@ -24671,6 +24672,7 @@ function collectMemoryStats(statTime, timeInterval) {
         .mem()
         .then((data) => {
         const memoryStats = {
+            metricName: "Memory",
             time: statTime,
             totalMemoryMb: data.total / 1024 / 1024,
             activeMemoryMb: data.active / 1024 / 1024,
@@ -24696,6 +24698,7 @@ function collectNetworkStats(statTime, timeInterval) {
             totalTxSec += nsd.tx_sec;
         }
         const networkStats = {
+            metricName: "Network",
             time: statTime,
             rxMb: Math.floor((totalRxSec * (timeInterval / 1000)) / 1024 / 1024),
             txMb: Math.floor((totalTxSec * (timeInterval / 1000)) / 1024 / 1024)
@@ -24717,6 +24720,7 @@ function collectDiskStats(statTime, timeInterval) {
         let rxSec = data.rx_sec ? data.rx_sec : 0;
         let wxSec = data.wx_sec ? data.wx_sec : 0;
         const diskStats = {
+            metricName: "Disk",
             time: statTime,
             rxMb: Math.floor((rxSec * (timeInterval / 1000)) / 1024 / 1024),
             wxMb: Math.floor((wxSec * (timeInterval / 1000)) / 1024 / 1024)
@@ -24733,7 +24737,7 @@ function collectMetrics() {
         try {
             for (const cpuStats of cpuStatsHistogram) {
                 const cpuMetric = {
-                    type: "CPU",
+                    type: "Metric",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
                     data: cpuStats
                 };
@@ -24741,7 +24745,7 @@ function collectMetrics() {
             }
             for (const memoryStats of memoryStatsHistogram) {
                 const memoryMetric = {
-                    type: "MEMORY",
+                    type: "Metric",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
                     data: memoryStats
                 };
@@ -24749,7 +24753,7 @@ function collectMetrics() {
             }
             for (const networkStats of networkStatsHistogram) {
                 const networkMetric = {
-                    type: "NETWORK",
+                    type: "Metric",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
                     data: networkStats
                 };
@@ -24757,7 +24761,7 @@ function collectMetrics() {
             }
             for (const diskStats of diskStatsHistogram) {
                 const diskMetric = {
-                    type: "DISK",
+                    type: "Metric",
                     version: utils_1.WORKFLOW_TELEMETRY_VERSION,
                     data: diskStats
                 };
