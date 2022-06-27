@@ -16,5 +16,5 @@ export async function setServerPort() {
         process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = await portfinder.getPortPromise();
     }
     core.saveState(WORKFLOW_TELEMETRY_SERVER_PORT, process.env.WORKFLOW_TELEMETRY_SERVER_PORT);
-    logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
+    logger.info(`Workflow telemetry server port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
 }

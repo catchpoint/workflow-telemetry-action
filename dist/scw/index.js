@@ -24851,7 +24851,7 @@ function startHttpServer() {
                     }
                     break;
                 }
-                case '/get_metrics': {
+                case '/metrics': {
                     if (request.method === 'GET') {
                         yield collectMetrics();
                         response.end(JSON.stringify(metricWorkflowData));
@@ -24951,7 +24951,7 @@ function setServerPort() {
             process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield portfinder.getPortPromise();
         }
         core.saveState(exports.WORKFLOW_TELEMETRY_SERVER_PORT, process.env.WORKFLOW_TELEMETRY_SERVER_PORT);
-        logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
+        logger.info(`Workflow telemetry server port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
     });
 }
 exports.setServerPort = setServerPort;

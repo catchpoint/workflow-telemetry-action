@@ -25,7 +25,9 @@ async function triggerStatCollect(port: number): Promise<void> {
   const response = await axios.post(
       `http://localhost:${port}/collect`
   )
-  logger.info(`Triggered stat collect: ${JSON.stringify(response.data)}`)
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
+  }
 }
 
 async function reportWorkflowMetrics(port: number): Promise<void> {
@@ -468,9 +470,11 @@ export async function sendMetricData(port: number): Promise<void> {
   logger.info(`Send stat collector result ...`)
   try {
     const response = await axios.get(
-        `http://localhost:${port}/get_metrics`
+        `http://localhost:${port}/metrics`
     )
-    logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
+    if (logger.isDebugEnabled()) {
+      logger.debug(`Sent stat data: ${JSON.stringify(response.data)}`)
+    }
   } catch (error: any) {
     logger.error('Unable to send stat collector result')
     logger.error(error)

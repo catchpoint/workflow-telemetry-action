@@ -162,7 +162,9 @@ export async function report(): Promise<void> {
 async function sendProcessData(processInfos: WorkflowData[]): Promise<void> {
     logger.info(`Send process result ...`)
     try {
-      logger.info(`Sent process data: ${JSON.stringify(processInfos)}`);
+        if (logger.isDebugEnabled()) {
+            logger.info(`Sent process data: ${JSON.stringify(processInfos)}`)
+        }
     } catch (error: any) {
       logger.error('Unable to send process result')
       logger.error(error)

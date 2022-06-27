@@ -87360,7 +87360,9 @@ function sendProcessData(processInfos) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Send process result ...`);
         try {
-            logger.info(`Sent process data: ${JSON.stringify(processInfos)}`);
+            if (logger.isDebugEnabled()) {
+                logger.info(`Sent process data: ${JSON.stringify(processInfos)}`);
+            }
         }
         catch (error) {
             logger.error('Unable to send process result');
@@ -87428,7 +87430,9 @@ function triggerStatCollect(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info('Triggering stat collect ...');
         const response = yield axios_1.default.post(`http://localhost:${port}/collect`);
-        logger.info(`Triggered stat collect: ${JSON.stringify(response.data)}`);
+        if (logger.isDebugEnabled()) {
+            logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`);
+        }
     });
 }
 function reportWorkflowMetrics(port) {
@@ -87797,8 +87801,10 @@ function sendMetricData(port) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Send stat collector result ...`);
         try {
-            const response = yield axios_1.default.get(`http://localhost:${port}/get_metrics`);
-            logger.info(`Sended stat data: ${JSON.stringify(response.data)}`);
+            const response = yield axios_1.default.get(`http://localhost:${port}/metrics`);
+            if (logger.isDebugEnabled()) {
+                logger.debug(`Sent stat data: ${JSON.stringify(response.data)}`);
+            }
         }
         catch (error) {
             logger.error('Unable to send stat collector result');
@@ -87866,7 +87872,7 @@ function setServerPort() {
             process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield portfinder.getPortPromise();
         }
         core.saveState(exports.WORKFLOW_TELEMETRY_SERVER_PORT, process.env.WORKFLOW_TELEMETRY_SERVER_PORT);
-        logger.info(`Random port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
+        logger.info(`Workflow telemetry server port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
     });
 }
 exports.setServerPort = setServerPort;

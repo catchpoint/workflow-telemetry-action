@@ -262,7 +262,7 @@ function startHttpServer() {
             }
             break
           }
-          case '/get_metrics': {
+          case '/metrics': {
             if (request.method === 'GET') {
               await collectMetrics()
               response.end(JSON.stringify(metricWorkflowData))
