@@ -10,6 +10,7 @@ export const WORKFLOW_TELEMETRY_VERSIONS = {
 
 export async function setServerPort() {
     var portfinder = require('portfinder');
+    portfinder.basePort = 10000;
     const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
     if(!port) {
         process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = await portfinder.getPortPromise();

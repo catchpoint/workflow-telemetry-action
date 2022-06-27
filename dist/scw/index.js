@@ -24945,6 +24945,7 @@ exports.WORKFLOW_TELEMETRY_VERSIONS = {
 function setServerPort() {
     return __awaiter(this, void 0, void 0, function* () {
         var portfinder = __webpack_require__(147);
+        portfinder.basePort = 10000;
         const port = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
         if (!port) {
             process.env["WORKFLOW_TELEMETRY_SERVER_PORT"] = yield portfinder.getPortPromise();
