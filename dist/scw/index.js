@@ -24852,7 +24852,7 @@ function startHttpServer() {
                     break;
                 }
                 case '/get_metrics': {
-                    if (request.method === 'POST') {
+                    if (request.method === 'GET') {
                         yield collectMetrics();
                         response.end(JSON.stringify(metricWorkflowData));
                     }
