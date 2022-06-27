@@ -130,6 +130,7 @@ export async function report(): Promise<void> {
                 data: command,
                 version: WORKFLOW_TELEMETRY_VERSIONS.PROCESS
             }
+            processInfos.push(processWorkflowData);
             commandInfos.push(sprintf(
                 "%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s",
                 command.ts, command.name, command.uid, command.pid, command.ppid,

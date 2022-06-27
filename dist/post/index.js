@@ -87337,6 +87337,7 @@ function report() {
                     data: command,
                     version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.PROCESS
                 };
+                processInfos.push(processWorkflowData);
                 commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s", command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
             }
             yield sendProcessData(processInfos);
