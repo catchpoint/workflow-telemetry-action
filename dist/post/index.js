@@ -87367,7 +87367,7 @@ function sendProcessData(processInfos) {
         logger.info(`Send process result ...`);
         try {
             if (logger.isDebugEnabled()) {
-                logger.info(`Sent process data: ${JSON.stringify(processInfos)}`);
+                logger.debug(`Sent process data: ${JSON.stringify(processInfos)}`);
             }
         }
         catch (error) {
