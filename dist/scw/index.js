@@ -31706,14 +31706,14 @@ function setServerPort() {
 }
 exports.setServerPort = setServerPort;
 function saveJobInfos(jobInfo) {
-    core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id);
-    core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name);
+    core.exportVariable(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id);
+    core.exportVariable(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name);
 }
 exports.saveJobInfos = saveJobInfos;
 function getJobInfo() {
     const jobInfo = {
-        id: parseInt(core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID)),
-        name: core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME),
+        id: parseInt(process.env[exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID] || ''),
+        name: process.env[exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME],
     };
     return jobInfo;
 }

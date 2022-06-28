@@ -1,6 +1,6 @@
 export interface JobInfo {
-    readonly id?: number
-    readonly name?: string
+    readonly id?: number | undefined
+    readonly name?: string | undefined
 }
 
 export interface MetaData {

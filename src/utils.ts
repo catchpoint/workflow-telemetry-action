@@ -29,14 +29,14 @@ export async function setServerPort() {
 
 
 export function saveJobInfos(jobInfo: JobInfo) {
-    core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id)
-    core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name)
+    core.exportVariable(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id)
+    core.exportVariable(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name)
 }
 
 function getJobInfo(): JobInfo {
     const jobInfo: JobInfo = {
-        id: parseInt(core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID)),
-        name: core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME),
+        id: parseInt(process.env[JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID] || ''),
+        name: process.env[JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME],
     }
     return jobInfo
 }
