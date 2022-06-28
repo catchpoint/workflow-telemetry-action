@@ -7,13 +7,14 @@ import * as github from '@actions/github';
 import {
   CPUStats, DiskStats, GraphResponse,
   JobInfo, LineGraphOptions,
-  MemoryStats, WorkflowData, NetworkStats,
+  MemoryStats, NetworkStats,
   ProcessedCPUStats, ProcessedDiskStats,
   ProcessedMemoryStats,
   ProcessedNetworkStats,
   ProcessedStats, StackedAreaGraphOptions
 } from './interfaces';
 import * as logger from './logger';
+import { createCITelemetryData, saveJobInfos } from './utils';
 
 const PAGE_SIZE: number = 100
 
@@ -131,7 +132,8 @@ async function reportWorkflowMetrics(port: number): Promise<void> {
 
   const jobInfo: JobInfo = await getJobInfo(octokit)
   logger.debug(`Job info: ${JSON.stringify(jobInfo)}`)
-
+  saveJobInfos(jobInfo);
+  
   let title = `## Workflow Telemetry - ${workflow}`
   if (jobInfo.name) {
     title = `${title} / ${jobInfo.name}`
@@ -381,7 +383,8 @@ async function getJobInfo(octokit: Octokit): Promise<JobInfo> {
       if (currentJobs && currentJobs.length) {
         return {
           id: currentJobs[0].id,
-          name: currentJobs[0].name
+          name: currentJobs[0].name,
+          runAttempt: currentJobs[0].run_attempt
         }
       }
       // Since returning job count is less than page size, this means that there are no other jobs.
@@ -472,8 +475,9 @@ export async function sendMetricData(port: number): Promise<void> {
     const response = await axios.get(
         `http://localhost:${port}/metrics`
     )
+    const ciTelemetryData = createCITelemetryData(response.data);
     if (logger.isDebugEnabled()) {
-      logger.debug(`Sent stat data: ${JSON.stringify(response.data)}`)
+      logger.debug(`Sent stat data: ${JSON.stringify(ciTelemetryData)}`)
     }
   } catch (error: any) {
     logger.error('Unable to send stat collector result')

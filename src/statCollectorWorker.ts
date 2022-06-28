@@ -6,7 +6,7 @@ import {
   MemoryStats,
   DiskStats,
   NetworkStats,
-  WorkflowData,
+  WorkflowDatum,
 } from './interfaces'
 import { WORKFLOW_TELEMETRY_VERSIONS } from './utils'
 
@@ -18,7 +18,7 @@ const SERVER_PORT: number = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT 
 let expectedScheduleTime: number = 0
 let statCollectTime: number = 0
 
-const metricWorkflowData: WorkflowData[] = []
+const metricWorkflowData: WorkflowDatum[] = []
 
 ///////////////////////////
 
@@ -143,7 +143,7 @@ function collectDiskStats(
 async function collectMetrics() {
   try {
     for(const cpuStats of cpuStatsHistogram) {
-      const cpuMetric: WorkflowData = {
+      const cpuMetric: WorkflowDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: cpuStats
@@ -152,7 +152,7 @@ async function collectMetrics() {
     }
 
     for(const memoryStats of memoryStatsHistogram) {
-      const memoryMetric: WorkflowData = {
+      const memoryMetric: WorkflowDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: memoryStats
@@ -161,7 +161,7 @@ async function collectMetrics() {
     }
 
     for(const networkStats of networkStatsHistogram) {
-      const networkMetric: WorkflowData = {
+      const networkMetric: WorkflowDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: networkStats
@@ -171,7 +171,7 @@ async function collectMetrics() {
 
 
     for(const diskStats of diskStatsHistogram) {
-      const diskMetric: WorkflowData = {
+      const diskMetric: WorkflowDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: diskStats

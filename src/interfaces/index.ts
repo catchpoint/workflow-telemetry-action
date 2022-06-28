@@ -1,9 +1,26 @@
 export interface JobInfo {
     readonly id?: number
     readonly name?: string
+    readonly runAttempt?: number | undefined
 }
 
-export interface WorkflowData {
+export interface MetaData {
+    readonly CIProvider: string
+    readonly RunId: number
+    readonly RepoName: string
+    readonly RepoOwner: string
+    readonly RunnerName?: string | undefined
+    readonly JobId?: number | undefined
+    readonly JobName?: string | undefined
+    readonly JobRunAttempt?: number | undefined
+}
+
+export interface CITelemetryData {
+    readonly metadata: MetaData;
+    readonly workflowData: WorkflowDatum[]
+}
+ 
+export interface WorkflowDatum {
     readonly version: string
     readonly data: Object
     readonly type: string

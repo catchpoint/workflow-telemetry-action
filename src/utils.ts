@@ -1,5 +1,7 @@
 import * as logger from './logger';
 import * as core from '@actions/core'
+import { CITelemetryData, JobInfo, MetaData, WorkflowDatum } from './interfaces';
+import * as github from '@actions/github';
 
 export const WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
 
@@ -7,6 +9,12 @@ export const WORKFLOW_TELEMETRY_VERSIONS = {
     METRIC: "v1",
     PROCESS: "v1"
 };
+
+export const JOB_STATES_NAME = {
+    FORESIGHT_WORKFLOW_JOB_ID: "FORESIGHT_WORKFLOW_JOB_ID",
+    FORESIGHT_WORKFLOW_JOB_NAME: "FORESIGHT_WORKFLOW_JOB_NAME",
+    FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT: "FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT"
+}
 
 export async function setServerPort() {
     var portfinder = require('portfinder');
@@ -17,4 +25,43 @@ export async function setServerPort() {
     }
     core.saveState(WORKFLOW_TELEMETRY_SERVER_PORT, process.env.WORKFLOW_TELEMETRY_SERVER_PORT);
     logger.info(`Workflow telemetry server port is: ${process.env.WORKFLOW_TELEMETRY_SERVER_PORT}`);
+}
+
+
+export function saveJobInfos(jobInfo: JobInfo) {
+    core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id)
+    core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name)
+    core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT, jobInfo.runAttempt)
+}
+
+function getJobInfo(): JobInfo {
+    const jobInfo: JobInfo = {
+        id: parseInt(core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID)),
+        name: core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME),
+        runAttempt: parseInt(core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT)),
+    }
+    return jobInfo
+}
+
+function getMetaData(): MetaData {
+    const { repo, runId } = github.context
+    const jobInfo = getJobInfo();
+    const metaData: MetaData = {
+        CIProvider: "GITHUB",
+        RunId: runId,
+        RepoName: repo.repo,
+        RepoOwner: repo.owner,
+        RunnerName: process.env.RUNNER_NAME,
+        JobId: jobInfo.id,
+        JobName: jobInfo.name,
+        JobRunAttempt: jobInfo.runAttempt
+    }
+    return metaData
+}
+
+export function createCITelemetryData(workflowData: WorkflowDatum[]): CITelemetryData {
+    return {
+        metadata: getMetaData(),
+        workflowData: workflowData
+    }
 }

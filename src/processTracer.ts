@@ -4,9 +4,9 @@ import * as core from '@actions/core';
 import si from 'systeminformation'
 import { sprintf } from 'sprintf-js';
 import { parse } from './procTraceParser';
-import { CompletedCommand, WorkflowData } from "./interfaces";
+import { CompletedCommand, WorkflowDatum } from "./interfaces";
 import * as logger from './logger';
-import { WORKFLOW_TELEMETRY_VERSIONS } from './utils';
+import { createCITelemetryData, WORKFLOW_TELEMETRY_VERSIONS } from './utils';
 
 const PROC_TRACER_PID_KEY: string = 'PROC_TRACER_PID'
 const PROC_TRACER_OUTPUT_FILE_NAME: string = 'proc-trace.out'
@@ -120,7 +120,7 @@ export async function report(): Promise<void> {
         // TODO Send results to the Foresight backend
 
         const commandInfos: string[] = []
-        const processInfos: WorkflowData[] = []
+        const processInfos: WorkflowDatum[] = []
         commandInfos.push(sprintf(
             "%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s",
             "TIME", "NAME", "UID", "PID", "PPID", "START TIME", "DURATION (ms)", "EXIT CODE", "FILE NAME + ARGS"))
@@ -159,11 +159,12 @@ export async function report(): Promise<void> {
 }
 
 
-async function sendProcessData(processInfos: WorkflowData[]): Promise<void> {
+async function sendProcessData(processInfos: WorkflowDatum[]): Promise<void> {
     logger.info(`Send process result ...`)
     try {
+        const ciTelemetryData = createCITelemetryData(processInfos);
         if (logger.isDebugEnabled()) {
-            logger.debug(`Sent process data: ${JSON.stringify(processInfos)}`)
+            logger.debug(`Sent process data: ${JSON.stringify(ciTelemetryData)}`)
         }
     } catch (error: any) {
       logger.error('Unable to send process result')

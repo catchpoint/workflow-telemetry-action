@@ -87366,8 +87366,9 @@ function sendProcessData(processInfos) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Send process result ...`);
         try {
+            const ciTelemetryData = (0, utils_1.createCITelemetryData)(processInfos);
             if (logger.isDebugEnabled()) {
-                logger.debug(`Sent process data: ${JSON.stringify(processInfos)}`);
+                logger.debug(`Sent process data: ${JSON.stringify(ciTelemetryData)}`);
             }
         }
         catch (error) {
@@ -87429,6 +87430,7 @@ const core = __importStar(__webpack_require__(2186));
 const action_1 = __webpack_require__(1231);
 const github = __importStar(__webpack_require__(5438));
 const logger = __importStar(__webpack_require__(4636));
+const utils_1 = __webpack_require__(1314);
 const PAGE_SIZE = 100;
 const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
@@ -87528,6 +87530,7 @@ function reportWorkflowMetrics(port) {
         logger.debug(`Commit: ${commit}`);
         const jobInfo = yield getJobInfo(octokit);
         logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
+        (0, utils_1.saveJobInfos)(jobInfo);
         let title = `## Workflow Telemetry - ${workflow}`;
         if (jobInfo.name) {
             title = `${title} / ${jobInfo.name}`;
@@ -87725,7 +87728,8 @@ function getJobInfo(octokit) {
                 if (currentJobs && currentJobs.length) {
                     return {
                         id: currentJobs[0].id,
-                        name: currentJobs[0].name
+                        name: currentJobs[0].name,
+                        runAttempt: currentJobs[0].run_attempt
                     };
                 }
                 // Since returning job count is less than page size, this means that there are no other jobs.
@@ -87808,8 +87812,9 @@ function sendMetricData(port) {
         logger.info(`Send stat collector result ...`);
         try {
             const response = yield axios_1.default.get(`http://localhost:${port}/metrics`);
+            const ciTelemetryData = (0, utils_1.createCITelemetryData)(response.data);
             if (logger.isDebugEnabled()) {
-                logger.debug(`Sent stat data: ${JSON.stringify(response.data)}`);
+                logger.debug(`Sent stat data: ${JSON.stringify(ciTelemetryData)}`);
             }
         }
         catch (error) {
@@ -87861,13 +87866,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setServerPort = exports.WORKFLOW_TELEMETRY_VERSIONS = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
+exports.createCITelemetryData = exports.saveJobInfos = exports.setServerPort = exports.JOB_STATES_NAME = exports.WORKFLOW_TELEMETRY_VERSIONS = exports.WORKFLOW_TELEMETRY_SERVER_PORT = void 0;
 const logger = __importStar(__webpack_require__(4636));
 const core = __importStar(__webpack_require__(2186));
+const github = __importStar(__webpack_require__(5438));
 exports.WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
 exports.WORKFLOW_TELEMETRY_VERSIONS = {
     METRIC: "v1",
     PROCESS: "v1"
+};
+exports.JOB_STATES_NAME = {
+    FORESIGHT_WORKFLOW_JOB_ID: "FORESIGHT_WORKFLOW_JOB_ID",
+    FORESIGHT_WORKFLOW_JOB_NAME: "FORESIGHT_WORKFLOW_JOB_NAME",
+    FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT: "FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT"
 };
 function setServerPort() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -87882,6 +87893,42 @@ function setServerPort() {
     });
 }
 exports.setServerPort = setServerPort;
+function saveJobInfos(jobInfo) {
+    core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id);
+    core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name);
+    core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT, jobInfo.runAttempt);
+}
+exports.saveJobInfos = saveJobInfos;
+function getJobInfo() {
+    const jobInfo = {
+        id: parseInt(core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID)),
+        name: core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME),
+        runAttempt: parseInt(core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT)),
+    };
+    return jobInfo;
+}
+function getMetaData() {
+    const { repo, runId } = github.context;
+    const jobInfo = getJobInfo();
+    const metaData = {
+        CIProvider: "GITHUB",
+        RunId: runId,
+        RepoName: repo.repo,
+        RepoOwner: repo.owner,
+        RunnerName: process.env.RUNNER_NAME,
+        JobId: jobInfo.id,
+        JobName: jobInfo.name,
+        JobRunAttempt: jobInfo.runAttempt
+    };
+    return metaData;
+}
+function createCITelemetryData(workflowData) {
+    return {
+        metadata: getMetaData(),
+        workflowData: workflowData
+    };
+}
+exports.createCITelemetryData = createCITelemetryData;
 
 
 /***/ }),
