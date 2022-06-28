@@ -4,7 +4,7 @@ import * as core from '@actions/core';
 import si from 'systeminformation'
 import { sprintf } from 'sprintf-js';
 import { parse } from './procTraceParser';
-import { CompletedCommand, WorkflowDatum } from "./interfaces";
+import { CompletedCommand, TelemetryDatum } from "./interfaces";
 import * as logger from './logger';
 import { createCITelemetryData, WORKFLOW_TELEMETRY_VERSIONS } from './utils';
 
@@ -120,7 +120,7 @@ export async function report(): Promise<void> {
         // TODO Send results to the Foresight backend
 
         const commandInfos: string[] = []
-        const processInfos: WorkflowDatum[] = []
+        const processInfos: TelemetryDatum[] = []
         commandInfos.push(sprintf(
             "%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s",
             "TIME", "NAME", "UID", "PID", "PPID", "START TIME", "DURATION (ms)", "EXIT CODE", "FILE NAME + ARGS"))
@@ -159,7 +159,7 @@ export async function report(): Promise<void> {
 }
 
 
-async function sendProcessData(processInfos: WorkflowDatum[]): Promise<void> {
+async function sendProcessData(processInfos: TelemetryDatum[]): Promise<void> {
     logger.info(`Send process result ...`)
     try {
         const ciTelemetryData = createCITelemetryData(processInfos);

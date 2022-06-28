@@ -1,6 +1,6 @@
 import * as logger from './logger';
 import * as core from '@actions/core'
-import { CITelemetryData, JobInfo, MetaData, WorkflowDatum } from './interfaces';
+import { CITelemetryData, JobInfo, MetaData, TelemetryDatum } from './interfaces';
 import * as github from '@actions/github';
 
 export const WORKFLOW_TELEMETRY_SERVER_PORT = "WORKFLOW_TELEMETRY_SERVER_PORT";
@@ -57,7 +57,7 @@ function getMetaData(): MetaData {
     return metaData
 }
 
-export function createCITelemetryData(workflowData: WorkflowDatum[]): CITelemetryData {
+export function createCITelemetryData(workflowData: TelemetryDatum[]): CITelemetryData {
     return {
         metadata: getMetaData(),
         workflowData: workflowData

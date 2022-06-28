@@ -6,7 +6,7 @@ import {
   MemoryStats,
   DiskStats,
   NetworkStats,
-  WorkflowDatum,
+  TelemetryDatum,
 } from './interfaces'
 import { WORKFLOW_TELEMETRY_VERSIONS } from './utils'
 
@@ -18,7 +18,7 @@ const SERVER_PORT: number = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT 
 let expectedScheduleTime: number = 0
 let statCollectTime: number = 0
 
-const metricWorkflowData: WorkflowDatum[] = []
+const metricTelemetryData: TelemetryDatum[] = []
 
 ///////////////////////////
 
@@ -143,40 +143,40 @@ function collectDiskStats(
 async function collectMetrics() {
   try {
     for(const cpuStats of cpuStatsHistogram) {
-      const cpuMetric: WorkflowDatum = {
+      const cpuMetric: TelemetryDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: cpuStats
       }
-      metricWorkflowData.push(cpuMetric);
+      metricTelemetryData.push(cpuMetric);
     }
 
     for(const memoryStats of memoryStatsHistogram) {
-      const memoryMetric: WorkflowDatum = {
+      const memoryMetric: TelemetryDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: memoryStats
       }
-      metricWorkflowData.push(memoryMetric);
+      metricTelemetryData.push(memoryMetric);
     }
 
     for(const networkStats of networkStatsHistogram) {
-      const networkMetric: WorkflowDatum = {
+      const networkMetric: TelemetryDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: networkStats
       }
-      metricWorkflowData.push(networkMetric);
+      metricTelemetryData.push(networkMetric);
     }
 
 
     for(const diskStats of diskStatsHistogram) {
-      const diskMetric: WorkflowDatum = {
+      const diskMetric: TelemetryDatum = {
         type: "Metric",
         version: WORKFLOW_TELEMETRY_VERSIONS.METRIC,
         data: diskStats
       }
-      metricWorkflowData.push(diskMetric);
+      metricTelemetryData.push(diskMetric);
     }
   } catch(err: any) {
     logger.debug(`Couldn't retrieve metrics data to send!`);
@@ -265,7 +265,7 @@ function startHttpServer() {
           case '/metrics': {
             if (request.method === 'GET') {
               await collectMetrics()
-              response.end(JSON.stringify(metricWorkflowData))
+              response.end(JSON.stringify(metricTelemetryData))
             } else {
               response.statusCode = 405
               response.end()

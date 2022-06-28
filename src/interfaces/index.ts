@@ -16,10 +16,10 @@ export interface MetaData {
 
 export interface CITelemetryData {
     readonly metadata: MetaData;
-    readonly workflowData: WorkflowDatum[]
+    readonly workflowData: TelemetryDatum[]
 }
  
-export interface WorkflowDatum {
+export interface TelemetryDatum {
     readonly version: string
     readonly data: Object
     readonly type: string

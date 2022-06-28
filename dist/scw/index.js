@@ -31385,7 +31385,7 @@ const SERVER_HOST = 'localhost';
 const SERVER_PORT = parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '');
 let expectedScheduleTime = 0;
 let statCollectTime = 0;
-const metricWorkflowData = [];
+const metricTelemetryData = [];
 ///////////////////////////
 // CPU Stats             //
 ///////////////////////////
@@ -31485,7 +31485,7 @@ function collectMetrics() {
                     version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: cpuStats
                 };
-                metricWorkflowData.push(cpuMetric);
+                metricTelemetryData.push(cpuMetric);
             }
             for (const memoryStats of memoryStatsHistogram) {
                 const memoryMetric = {
@@ -31493,7 +31493,7 @@ function collectMetrics() {
                     version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: memoryStats
                 };
-                metricWorkflowData.push(memoryMetric);
+                metricTelemetryData.push(memoryMetric);
             }
             for (const networkStats of networkStatsHistogram) {
                 const networkMetric = {
@@ -31501,7 +31501,7 @@ function collectMetrics() {
                     version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: networkStats
                 };
-                metricWorkflowData.push(networkMetric);
+                metricTelemetryData.push(networkMetric);
             }
             for (const diskStats of diskStatsHistogram) {
                 const diskMetric = {
@@ -31509,7 +31509,7 @@ function collectMetrics() {
                     version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.METRIC,
                     data: diskStats
                 };
-                metricWorkflowData.push(diskMetric);
+                metricTelemetryData.push(diskMetric);
             }
         }
         catch (err) {
@@ -31598,7 +31598,7 @@ function startHttpServer() {
                 case '/metrics': {
                     if (request.method === 'GET') {
                         yield collectMetrics();
-                        response.end(JSON.stringify(metricWorkflowData));
+                        response.end(JSON.stringify(metricTelemetryData));
                     }
                     else {
                         response.statusCode = 405;
