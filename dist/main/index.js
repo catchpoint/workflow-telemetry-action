@@ -87915,7 +87915,7 @@ function getMetaData() {
 }
 function createCITelemetryData(telemetryData) {
     return {
-        metadata: getMetaData(),
+        metaData: getMetaData(),
         telemetryData: telemetryData
     };
 }

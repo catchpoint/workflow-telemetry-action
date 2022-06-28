@@ -59,7 +59,7 @@ function getMetaData(): MetaData {
 
 export function createCITelemetryData(telemetryData: TelemetryDatum[]): CITelemetryData {
     return {
-        metadata: getMetaData(),
+        metaData: getMetaData(),
         telemetryData: telemetryData
     }
 }
