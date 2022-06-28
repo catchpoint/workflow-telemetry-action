@@ -57,9 +57,9 @@ function getMetaData(): MetaData {
     return metaData
 }
 
-export function createCITelemetryData(workflowData: TelemetryDatum[]): CITelemetryData {
+export function createCITelemetryData(telemetryData: TelemetryDatum[]): CITelemetryData {
     return {
         metadata: getMetaData(),
-        workflowData: workflowData
+        telemetryData: telemetryData
     }
 }

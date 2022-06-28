@@ -16,7 +16,7 @@ export interface MetaData {
 
 export interface CITelemetryData {
     readonly metadata: MetaData;
-    readonly workflowData: TelemetryDatum[]
+    readonly telemetryData: TelemetryDatum[]
 }
  
 export interface TelemetryDatum {

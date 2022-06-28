@@ -31732,10 +31732,10 @@ function getMetaData() {
     };
     return metaData;
 }
-function createCITelemetryData(workflowData) {
+function createCITelemetryData(telemetryData) {
     return {
         metadata: getMetaData(),
-        workflowData: workflowData
+        telemetryData: telemetryData
     };
 }
 exports.createCITelemetryData = createCITelemetryData;

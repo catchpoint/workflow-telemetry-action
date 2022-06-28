@@ -87326,12 +87326,12 @@ function report() {
             const processInfos = [];
             commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s", "TIME", "NAME", "UID", "PID", "PPID", "START TIME", "DURATION (ms)", "EXIT CODE", "FILE NAME + ARGS"));
             for (let command of completedCommands) {
-                let processWorkflowData = {
+                let processTelemetryDatum = {
                     type: "Process",
                     data: command,
                     version: utils_1.WORKFLOW_TELEMETRY_VERSIONS.PROCESS
                 };
-                processInfos.push(processWorkflowData);
+                processInfos.push(processTelemetryDatum);
                 commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s", command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
             }
             yield sendProcessData(processInfos);
@@ -87913,10 +87913,10 @@ function getMetaData() {
     };
     return metaData;
 }
-function createCITelemetryData(workflowData) {
+function createCITelemetryData(telemetryData) {
     return {
         metadata: getMetaData(),
-        workflowData: workflowData
+        telemetryData: telemetryData
     };
 }
 exports.createCITelemetryData = createCITelemetryData;
