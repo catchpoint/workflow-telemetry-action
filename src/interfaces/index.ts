@@ -1,7 +1,6 @@
 export interface JobInfo {
     readonly id?: number
     readonly name?: string
-    readonly runAttempt?: number | undefined
 }
 
 export interface MetaData {
@@ -9,10 +8,10 @@ export interface MetaData {
     readonly RunId: number
     readonly RepoName: string
     readonly RepoOwner: string
-    readonly RunnerName?: string | undefined
+    readonly RunAttempt: string | undefined
+    readonly RunnerName: string | undefined
     readonly JobId?: number | undefined
     readonly JobName?: string | undefined
-    readonly JobRunAttempt?: number | undefined
 }
 
 export interface CITelemetryData {

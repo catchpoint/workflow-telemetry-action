@@ -383,8 +383,7 @@ async function getJobInfo(octokit: Octokit): Promise<JobInfo> {
       if (currentJobs && currentJobs.length) {
         return {
           id: currentJobs[0].id,
-          name: currentJobs[0].name,
-          runAttempt: currentJobs[0].run_attempt
+          name: currentJobs[0].name
         }
       }
       // Since returning job count is less than page size, this means that there are no other jobs.

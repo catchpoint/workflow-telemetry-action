@@ -31,14 +31,12 @@ export async function setServerPort() {
 export function saveJobInfos(jobInfo: JobInfo) {
     core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id)
     core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name)
-    core.saveState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT, jobInfo.runAttempt)
 }
 
 function getJobInfo(): JobInfo {
     const jobInfo: JobInfo = {
         id: parseInt(core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID)),
         name: core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME),
-        runAttempt: parseInt(core.getState(JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT)),
     }
     return jobInfo
 }
@@ -51,10 +49,10 @@ function getMetaData(): MetaData {
         RunId: runId,
         RepoName: repo.repo,
         RepoOwner: repo.owner,
+        RunAttempt: process.env.GITHUB_RUN_ATTEMPT,
         RunnerName: process.env.RUNNER_NAME,
         JobId: jobInfo.id,
         JobName: jobInfo.name,
-        JobRunAttempt: jobInfo.runAttempt
     }
     return metaData
 }

@@ -31708,14 +31708,12 @@ exports.setServerPort = setServerPort;
 function saveJobInfos(jobInfo) {
     core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID, jobInfo.id);
     core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME, jobInfo.name);
-    core.saveState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT, jobInfo.runAttempt);
 }
 exports.saveJobInfos = saveJobInfos;
 function getJobInfo() {
     const jobInfo = {
         id: parseInt(core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_ID)),
         name: core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_NAME),
-        runAttempt: parseInt(core.getState(exports.JOB_STATES_NAME.FORESIGHT_WORKFLOW_JOB_RUN_ATTEMPT)),
     };
     return jobInfo;
 }
@@ -31727,10 +31725,10 @@ function getMetaData() {
         RunId: runId,
         RepoName: repo.repo,
         RepoOwner: repo.owner,
+        RunAttempt: process.env.GITHUB_RUN_ATTEMPT,
         RunnerName: process.env.RUNNER_NAME,
         JobId: jobInfo.id,
         JobName: jobInfo.name,
-        JobRunAttempt: jobInfo.runAttempt
     };
     return metaData;
 }
