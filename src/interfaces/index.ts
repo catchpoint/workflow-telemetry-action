@@ -4,14 +4,14 @@ export interface JobInfo {
 }
 
 export interface MetaData {
-    readonly CIProvider: string
-    readonly RunId: number
-    readonly RepoName: string
-    readonly RepoOwner: string
-    readonly RunAttempt: string | undefined
-    readonly RunnerName: string | undefined
-    readonly JobId?: number | undefined
-    readonly JobName?: string | undefined
+    readonly ciProvider: string
+    readonly runId: number
+    readonly repoName: string
+    readonly repoOwner: string
+    readonly runAttempt: string | undefined
+    readonly runnerName: string | undefined
+    readonly jobId?: number | undefined
+    readonly jobName?: string | undefined
 }
 
 export interface CITelemetryData {

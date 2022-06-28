@@ -87908,14 +87908,14 @@ function getMetaData() {
     const { repo, runId } = github.context;
     const jobInfo = getJobInfo();
     const metaData = {
-        CIProvider: "GITHUB",
-        RunId: runId,
-        RepoName: repo.repo,
-        RepoOwner: repo.owner,
-        RunAttempt: process.env.GITHUB_RUN_ATTEMPT,
-        RunnerName: process.env.RUNNER_NAME,
-        JobId: jobInfo.id,
-        JobName: jobInfo.name,
+        ciProvider: "GITHUB",
+        runId: runId,
+        repoName: repo.repo,
+        repoOwner: repo.owner,
+        runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+        runnerName: process.env.RUNNER_NAME,
+        jobId: jobInfo.id,
+        jobName: jobInfo.name,
     };
     return metaData;
 }
