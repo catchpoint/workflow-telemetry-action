@@ -33,7 +33,7 @@ To use the action, add the following step before the steps you want to track.
 
 ```yaml
 - name: Collect Workflow Telemetry
-  uses: thundra-io/workflow-telemetry-action@v1
+  uses: runforesight/workflow-telemetry-action@v1
 ```
 
 ## Configuration
