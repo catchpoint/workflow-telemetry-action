@@ -10,6 +10,14 @@ inputs:
     description: "Statistic collection frequency in seconds. Must be a number. Defaults to '5'."
     default: 5
     required: false
+  min_proc_duration:
+    description: "Puts minimum limit for process execution duration to be traced. Must be a number. Defaults to '-1' which means process duration filtering is not applied."
+    default: -1
+    required: false
+  trace_sys_procs:
+    description: "Enables tracing default system processes ('aws', 'cat', 'sed', ...). Defaults to 'false'."
+    default: 'false'
+    required: false
   comment_on_pr:
     description: "Set to `true` to publish the results as comment to the PR (applicable if workflow run is triggered from PR). Defaults to 'true'."
     default: 'true'
@@ -22,6 +30,7 @@ inputs:
     description: "Set to `dark` to generate charts compatible with Github dark mode. Defaults to 'light'."
     default: 'light'
     required: false
+
 runs:
   using: "node12"
   main: dist/main/index.js
