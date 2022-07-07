@@ -1,244 +1,491 @@
-import si from 'systeminformation'
-import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
-import * as logger from './logger'
+import { ChildProcess, spawn } from 'child_process';
+import path from 'path';
+import axios from 'axios';
+import * as core from '@actions/core';
+import { Octokit } from '@octokit/action';
+import * as github from '@actions/github';
+import {
+  CPUStats, DiskStats, GraphResponse,
+  JobInfo, LineGraphOptions,
+  MemoryStats, NetworkStats,
+  ProcessedCPUStats, ProcessedDiskStats,
+  ProcessedMemoryStats,
+  ProcessedNetworkStats,
+  ProcessedStats, StackedAreaGraphOptions
+} from './interfaces';
+import * as logger from './logger';
 
-import { CPUStats, MemoryStats, DiskStats, NetworkStats } from './interfaces'
+const STAT_SERVER_PORT: number = 7777
+const PAGE_SIZE: number = 100
 
-const STATS_FREQ: number =
-  parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
-const SERVER_HOST: string = 'localhost'
-// TODO
-// It is better to find an available/free port automatically and use it.
-// Then the post script (`post.ts`) needs to know the selected port.
-const SERVER_PORT: number =
-  parseInt(process.env.WORKFLOW_TELEMETRY_SERVER_PORT || '') || 7777
+const BLACK: string = '#000000'
+const WHITE: string = '#FFFFFF'
 
-let expectedScheduleTime: number = 0
-let statCollectTime: number = 0
+const { pull_request } = github.context.payload
+const { workflow, job, repo, runId, sha } = github.context
 
-///////////////////////////
-
-// CPU Stats             //
-///////////////////////////
-
-const cpuStatsHistogram: CPUStats[] = []
-
-function collectCPUStats(
-    statTime: number,
-    timeInterval: number
-): Promise<any> {
-  return si
-      .currentLoad()
-      .then((data: si.Systeminformation.CurrentLoadData) => {
-        const cpuStats: CPUStats = {
-          time: statTime,
-          totalLoad: data.currentLoad,
-          userLoad: data.currentLoadUser,
-          systemLoad: data.currentLoadSystem
-        }
-        cpuStatsHistogram.push(cpuStats)
-      })
-      .catch((error: any) => {
-        logger.error(error)
-      })
-}
-
-///////////////////////////
-
-// Memory Stats          //
-///////////////////////////
-
-const memoryStatsHistogram: MemoryStats[] = []
-
-function collectMemoryStats(
-    statTime: number,
-    timeInterval: number
-): Promise<any> {
-  return si
-      .mem()
-      .then((data: si.Systeminformation.MemData) => {
-        const memoryStats: MemoryStats = {
-          time: statTime,
-          totalMemoryMb: data.total / 1024 / 1024,
-          activeMemoryMb: data.active / 1024 / 1024,
-          availableMemoryMb: data.available / 1024 / 1024
-        }
-        memoryStatsHistogram.push(memoryStats)
-      })
-      .catch((error: any) => {
-        logger.error(error)
-      })
-}
-
-///////////////////////////
-
-// Network Stats         //
-///////////////////////////
-
-const networkStatsHistogram: NetworkStats[] = []
-
-function collectNetworkStats(
-  statTime: number,
-  timeInterval: number
-): Promise<any> {
-  return si
-    .networkStats()
-    .then((data: si.Systeminformation.NetworkStatsData[]) => {
-      let totalRxSec = 0,
-        totalTxSec = 0
-      for (let nsd of data) {
-        totalRxSec += nsd.rx_sec
-        totalTxSec += nsd.tx_sec
-      }
-      const networkStats: NetworkStats = {
-        time: statTime,
-        rxMb: Math.floor((totalRxSec * (timeInterval / 1000)) / 1024 / 1024),
-        txMb: Math.floor((totalTxSec * (timeInterval / 1000)) / 1024 / 1024)
-      }
-      networkStatsHistogram.push(networkStats)
-    })
-    .catch((error: any) => {
-      logger.error(error)
-    })
-}
-
-///////////////////////////
-
-// Disk Stats            //
-///////////////////////////
-
-const diskStatsHistogram: DiskStats[] = []
-
-function collectDiskStats(
-  statTime: number,
-  timeInterval: number
-): Promise<any> {
-  return si
-    .fsStats()
-    .then((data: si.Systeminformation.FsStatsData) => {
-      let rxSec = data.rx_sec ? data.rx_sec : 0
-      let wxSec = data.wx_sec ? data.wx_sec : 0
-      const diskStats: DiskStats = {
-        time: statTime,
-        rxMb: Math.floor((rxSec * (timeInterval / 1000)) / 1024 / 1024),
-        wxMb: Math.floor((wxSec * (timeInterval / 1000)) / 1024 / 1024)
-      }
-      diskStatsHistogram.push(diskStats)
-    })
-    .catch((error: any) => {
-      logger.error(error)
-    })
-}
-
-///////////////////////////
-
-async function collectStats(triggeredFromScheduler: boolean = true) {
-  try {
-    const currentTime: number = Date.now()
-    const timeInterval: number = statCollectTime
-      ? currentTime - statCollectTime
-      : 0
-
-    statCollectTime = currentTime
-
-    const promises: Promise<any>[] = []
-
-    promises.push(collectCPUStats(statCollectTime, timeInterval))
-    promises.push(collectMemoryStats(statCollectTime, timeInterval))
-    promises.push(collectNetworkStats(statCollectTime, timeInterval))
-    promises.push(collectDiskStats(statCollectTime, timeInterval))
-
-    return promises
-  } finally {
-    if (triggeredFromScheduler) {
-      expectedScheduleTime += STATS_FREQ
-      setTimeout(collectStats, expectedScheduleTime - Date.now())
-    }
+async function triggerStatCollect(): Promise<void> {
+  logger.debug('Triggering stat collect ...')
+  const response = await axios.post(`http://localhost:${STAT_SERVER_PORT}/collect`)
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
   }
 }
 
-function startHttpServer() {
-  const server: Server = createServer(
-    async (request: IncomingMessage, response: ServerResponse) => {
-      try {
-        switch (request.url) {
-          case '/cpu': {
-            if (request.method === 'GET') {
-              response.end(JSON.stringify(cpuStatsHistogram))
-            } else {
-              response.statusCode = 405
-              response.end()
+async function reportWorkflowMetrics(): Promise<void> {
+  const theme: string = core.getInput('theme', { required: false })
+  let axisColor = BLACK
+  switch (theme) {
+    case 'light':
+      axisColor = BLACK
+      break
+    case 'dark':
+      axisColor = WHITE
+      break
+    default:
+      core.warning(`Invalid theme: ${theme}`)
+  }
+
+  const { userLoadX, systemLoadX } = await getCPUStats()
+  const { activeMemoryX, availableMemoryX } = await getMemoryStats()
+  const { networkReadX, networkWriteX } = await getNetworkStats()
+  const { diskReadX, diskWriteX } = await getDiskStats()
+
+  const cpuLoad =
+      userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
+          ? (await getStackedAreaGraph({
+            label: 'CPU Load (%)',
+            axisColor,
+            areas: [
+              {
+                label: 'User Load',
+                color: '#e41a1c99',
+                points: userLoadX
+              },
+              {
+                label: 'System Load',
+                color: '#ff7f0099',
+                points: systemLoadX
+              }
+            ]
+          }))
+          : null
+
+  const memoryUsage =
+      activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
+          ? (await getStackedAreaGraph({
+            label: 'Memory Usage (MB)',
+            axisColor,
+            areas: [
+              {
+                label: 'Used',
+                color: '#377eb899',
+                points: activeMemoryX
+              },
+              {
+                label: 'Free',
+                color: '#4daf4a99',
+                points: availableMemoryX
+              }
+            ]
+          }))
+          : null
+
+  const networkIORead =
+      networkReadX && networkReadX.length
+          ? (await getLineGraph({
+            label: 'Network I/O Read (MB)',
+            axisColor,
+            line: {
+              label: 'Read',
+              color: '#be4d25',
+              points: networkReadX
             }
-            break
-          }
-          case '/memory': {
-            if (request.method === 'GET') {
-              response.end(JSON.stringify(memoryStatsHistogram))
-            } else {
-              response.statusCode = 405
-              response.end()
+          }))
+          : null
+
+  const networkIOWrite =
+      networkWriteX && networkWriteX.length
+          ? (await getLineGraph({
+            label: 'Network I/O Write (MB)',
+            axisColor,
+            line: {
+              label: 'Write',
+              color: '#6c25be',
+              points: networkWriteX
             }
-            break
-          }
-          case '/network': {
-            if (request.method === 'GET') {
-              response.end(JSON.stringify(networkStatsHistogram))
-            } else {
-              response.statusCode = 405
-              response.end()
+          }))
+          : null
+
+  const diskIORead =
+      diskReadX && diskReadX.length
+          ? (await getLineGraph({
+            label: 'Disk I/O Read (MB)',
+            axisColor,
+            line: {
+              label: 'Read',
+              color: '#be4d25',
+              points: diskReadX
             }
-            break
-          }
-          case '/disk': {
-            if (request.method === 'GET') {
-              response.end(JSON.stringify(diskStatsHistogram))
-            } else {
-              response.statusCode = 405
-              response.end()
+          }))
+          : null
+
+  const diskIOWrite =
+      diskWriteX && diskWriteX.length
+          ? (await getLineGraph({
+            label: 'Disk I/O Write (MB)',
+            axisColor,
+            line: {
+              label: 'Write',
+              color: '#6c25be',
+              points: diskWriteX
             }
-            break
-          }
-          case '/collect': {
-            if (request.method === 'POST') {
-              await collectStats(false)
-              response.end()
-            } else {
-              response.statusCode = 405
-              response.end()
-            }
-            break
-          }
-          default: {
-            response.statusCode = 404
-            response.end()
-          }
-        }
-      } catch (error: any) {
-        logger.error(error)
-        response.statusCode = 500
-        response.end(
-          JSON.stringify({
-            type: error.type,
-            message: error.message
-          })
-        )
-      }
+          }))
+          : null
+
+  const octokit: Octokit = new Octokit()
+
+  logger.debug(`Workflow - Job: ${workflow} - ${job}`)
+
+  let commit: string = (pull_request && pull_request.head && pull_request.head.sha) || sha
+  logger.debug(`Commit: ${commit}`)
+
+  const jobInfo: JobInfo = await getJobInfo(octokit)
+  logger.debug(`Job info: ${JSON.stringify(jobInfo)}`)
+
+  let title = `## Workflow Telemetry - ${workflow}`
+  if (jobInfo.name) {
+    title = `${title} / ${jobInfo.name}`
+  } else {
+    title = `${title} / ${job}`
+  }
+
+  const commitUrl = `https://github.com/${repo.owner}/${repo.repo}/commit/${commit}`
+  logger.debug(`Commit url: ${commitUrl}`)
+
+  let info = `Workflow telemetry for commit [${commit}](${commitUrl})`
+  if (jobInfo.id) {
+    const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`
+    logger.debug(`Job url: ${jobUrl}`)
+    info = `${info}\nYou can access workflow job details [here](${jobUrl})`
+  }
+
+  const postContentItems: string[] = [
+    title,
+    '',
+    info,
+    '',
+  ]
+  if (cpuLoad) {
+    postContentItems.push(
+        '### CPU Metrics',
+        `![${cpuLoad.id}](${cpuLoad.url})`,
+        ''
+    )
+  }
+  if (memoryUsage) {
+    postContentItems.push(
+        '### Memory Metrics',
+        `![${memoryUsage.id}](${memoryUsage.url})`,
+        ''
+    )
+  }
+  if ((networkIORead && networkIOWrite) || (diskIORead && diskIOWrite)) {
+    postContentItems.push(
+        '### IO Metrics',
+        '|               | Read      | Write     |',
+        '|---            |---        |---        |'
+    )
+  }
+  if (networkIORead && networkIOWrite) {
+    postContentItems.push(
+        `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`
+    )
+  }
+  if (diskIORead && diskIOWrite) {
+    postContentItems.push(
+        `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
+    )
+  }
+  const postContent: string = postContentItems.join('\n')
+
+  const jobSummary: string = core.getInput('job_summary')
+  if ('true' === jobSummary) {
+    core.summary.addRaw(postContent)
+    await core.summary.write()
+  }
+
+  const commentOnPR: string = core.getInput('comment_on_pr')
+  if (pull_request && 'true' === commentOnPR) {
+    if (logger.isDebugEnabled()) {
+      logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`)
     }
+
+    await octokit.rest.issues.createComment({
+      ...github.context.repo,
+      issue_number: Number(github.context.payload.pull_request?.number),
+      body: postContent
+    })
+  } else {
+    logger.debug(`Couldn't find Pull Request`)
+  }
+}
+
+async function getCPUStats(): Promise<ProcessedCPUStats> {
+  let userLoadX: ProcessedStats[] = []
+  let systemLoadX: ProcessedStats[] = []
+
+  logger.debug('Getting CPU stats ...')
+  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/cpu`)
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Got CPU stats: ${JSON.stringify(response.data)}`)
+  }
+
+  response.data.forEach((element: CPUStats) => {
+    userLoadX.push({
+      x: element.time,
+      y: element.userLoad
+    })
+
+    systemLoadX.push({
+      x: element.time,
+      y: element.systemLoad
+    })
+  })
+
+  return { userLoadX, systemLoadX }
+}
+
+async function getMemoryStats(): Promise<ProcessedMemoryStats> {
+  let activeMemoryX: ProcessedStats[] = []
+  let availableMemoryX: ProcessedStats[] = []
+
+  logger.debug('Getting memory stats ...')
+  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/memory`)
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`)
+  }
+
+  response.data.forEach((element: MemoryStats) => {
+    activeMemoryX.push({
+      x: element.time,
+      y: element.activeMemoryMb
+    })
+
+    availableMemoryX.push({
+      x: element.time,
+      y: element.availableMemoryMb
+    })
+  })
+
+  return { activeMemoryX, availableMemoryX }
+}
+
+async function getNetworkStats(): Promise<ProcessedNetworkStats> {
+  let networkReadX: ProcessedStats[] = []
+  let networkWriteX: ProcessedStats[] = []
+
+  logger.debug('Getting network stats ...')
+  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/network`)
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
+  }
+
+  response.data.forEach((element: NetworkStats) => {
+    networkReadX.push({
+      x: element.time,
+      y: element.rxMb
+    })
+
+    networkWriteX.push({
+      x: element.time,
+      y: element.txMb
+    })
+  })
+
+  return { networkReadX, networkWriteX }
+}
+
+async function getDiskStats(): Promise<ProcessedDiskStats> {
+  let diskReadX: ProcessedStats[] = []
+  let diskWriteX: ProcessedStats[] = []
+
+  logger.debug('Getting disk stats ...')
+  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/disk`)
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Got disk stats: ${JSON.stringify(response.data)}`)
+  }
+
+  response.data.forEach((element: DiskStats) => {
+    diskReadX.push({
+      x: element.time,
+      y: element.rxMb
+    })
+
+    diskWriteX.push({
+      x: element.time,
+      y: element.wxMb
+    })
+  })
+
+  return { diskReadX, diskWriteX }
+}
+
+async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
+  const payload = {
+    options: {
+      width: 1000,
+      height: 500,
+      xAxis: {
+        label: 'Time'
+      },
+      yAxis: {
+        label: options.label
+      },
+      timeTicks: {
+        unit: 'auto'
+      }
+    },
+    lines: [options.line]
+  }
+
+  const response = await axios.put(
+      'https://api.globadge.com/v1/chartgen/line/time',
+      payload
   )
 
-  server.listen(SERVER_PORT, SERVER_HOST, () => {
-    logger.info(`Stat server listening on port ${SERVER_PORT}`)
-  })
+  return response.data
 }
 
-function init() {
-  expectedScheduleTime = Date.now()
+async function getStackedAreaGraph(options: StackedAreaGraphOptions): Promise<GraphResponse> {
+  const payload = {
+    options: {
+      width: 1000,
+      height: 500,
+      xAxis: {
+        label: 'Time'
+      },
+      yAxis: {
+        label: options.label
+      },
+      timeTicks: {
+        unit: 'auto'
+      }
+    },
+    areas: options.areas
+  }
 
-  logger.info('Starting stat collector ...')
-  process.nextTick(collectStats)
+  const response = await axios.put(
+      'https://api.globadge.com/v1/chartgen/stacked-area/time',
+      payload
+  )
 
-  logger.info('Starting HTTP server ...')
-  startHttpServer()
+  return response.data
 }
 
-init()
+async function getJobInfo(octokit: Octokit): Promise<JobInfo> {
+  const _getJobInfo = async (): Promise<JobInfo> => {
+    for (let page = 0; true; page++) {
+      const result = await octokit.rest.actions.listJobsForWorkflowRun({
+        owner: repo.owner,
+        repo: repo.repo,
+        run_id: runId,
+        per_page: PAGE_SIZE,
+        page
+      })
+      const jobs = result.data.jobs
+      // If there are no jobs, stop here
+      if (!jobs || !jobs.length) {
+        break
+      }
+      const currentJobs = jobs.filter(
+          it =>
+              it.status === 'in_progress' &&
+              it.runner_name === process.env.RUNNER_NAME
+      )
+      if (currentJobs && currentJobs.length) {
+        return {
+          id: currentJobs[0].id,
+          name: currentJobs[0].name
+        }
+      }
+      // Since returning job count is less than page size, this means that there are no other jobs.
+      // So no need to make another request for the next page.
+      if (jobs.length < PAGE_SIZE) {
+        break
+      }
+    }
+    return {}
+  }
+  for (let i = 0; i < 10; i++) {
+    const currentJobInfo = await _getJobInfo()
+    if (currentJobInfo && currentJobInfo.id) {
+      return currentJobInfo
+    }
+    await new Promise(r => setTimeout(r, 1000))
+  }
+  return {}
+}
+
+///////////////////////////
+
+export async function start(): Promise<void> {
+  logger.info(`Starting stat collector ...`)
+
+  try {
+    let statFrequency: number = 0
+    const statFrequencyInput: string = core.getInput('stat_frequency')
+    if (statFrequencyInput) {
+      const statFrequencyVal: number = parseInt(statFrequencyInput)
+      if (Number.isInteger(statFrequencyVal)) {
+        statFrequency = statFrequencyVal * 1000
+      }
+    }
+
+    const child: ChildProcess = spawn(
+        process.argv[0],
+        [path.join(__dirname, '../scw/index.js')],
+        {
+          detached: true,
+          stdio: 'ignore',
+          env: {
+            ...process.env,
+            WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency ? `${statFrequency}` : undefined
+          }
+        }
+    )
+    child.unref()
+
+    logger.info(`Started stat collector`)
+  } catch (error: any) {
+    logger.error('Unable to start stat collector')
+    logger.error(error)
+  }
+}
+
+export async function finish(): Promise<void> {
+  logger.info(`Finishing stat collector ...`)
+
+  try {
+    // Trigger stat collect, so we will have remaining stats since the latest schedule
+    await triggerStatCollect()
+
+    logger.info(`Finished stat collector`)
+  } catch (error: any) {
+    logger.error('Unable to finish stat collector')
+    logger.error(error)
+  }
+}
+
+export async function report(): Promise<void> {
+  logger.info(`Reporting stat collector result ...`)
+
+  try {
+    await reportWorkflowMetrics()
+
+    logger.info(`Reported stat collector result`)
+  } catch (error: any) {
+    logger.error('Unable to report stat collector result')
+    logger.error(error)
+  }
+}
