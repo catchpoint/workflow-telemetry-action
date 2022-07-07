@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thundra-io/workflow-telemetry-action.git"
+    "url": "git+https://github.com/runforesight/workflow-telemetry-action.git"
   },
   "keywords": [
     "monitoring",
