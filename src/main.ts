@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import * as statCollector from './statCollector';
 import * as processTracer from './processTracer';
+import * as fileTracer from './fileTracer';
 import * as logger from './logger'
 
 async function run(): Promise<void> {
@@ -11,6 +12,8 @@ async function run(): Promise<void> {
     await statCollector.start()
     // Start process tracer
     await processTracer.start()
+    // Start file tracer
+    await fileTracer.start()
 
     logger.info(`Initialization completed`)
   } catch (error: any) {

@@ -1,101 +1,116 @@
 export interface JobInfo {
-    readonly id?: number
-    readonly name?: string
+  readonly id?: number
+  readonly name?: string
 }
 
 export interface CPUStats {
-    readonly time: number
-    readonly totalLoad: number
-    readonly userLoad: number
-    readonly systemLoad: number
+  readonly time: number
+  readonly totalLoad: number
+  readonly userLoad: number
+  readonly systemLoad: number
 }
 
 export interface MemoryStats {
-    readonly time: number
-    readonly totalMemoryMb: number
-    readonly activeMemoryMb: number
-    readonly availableMemoryMb: number
+  readonly time: number
+  readonly totalMemoryMb: number
+  readonly activeMemoryMb: number
+  readonly availableMemoryMb: number
 }
 
 export interface NetworkStats {
-    readonly time: number
-    readonly rxMb: number
-    readonly txMb: number
+  readonly time: number
+  readonly rxMb: number
+  readonly txMb: number
 }
 
 export interface DiskStats {
-    readonly time: number
-    readonly rxMb: number
-    readonly wxMb: number
+  readonly time: number
+  readonly rxMb: number
+  readonly wxMb: number
 }
 
 export interface ProcessedStats {
-    readonly x: number,
-    readonly y: number
+  readonly x: number
+  readonly y: number
 }
 
 export interface ProcessedCPUStats {
-    readonly userLoadX: ProcessedStats[],
-    readonly systemLoadX: ProcessedStats[],
+  readonly userLoadX: ProcessedStats[]
+  readonly systemLoadX: ProcessedStats[]
 }
 
 export interface ProcessedMemoryStats {
-    readonly activeMemoryX: ProcessedStats[],
-    readonly availableMemoryX: ProcessedStats[],
+  readonly activeMemoryX: ProcessedStats[]
+  readonly availableMemoryX: ProcessedStats[]
 }
 
 export interface ProcessedNetworkStats {
-    readonly networkReadX: ProcessedStats[],
-    readonly networkWriteX: ProcessedStats[],
+  readonly networkReadX: ProcessedStats[]
+  readonly networkWriteX: ProcessedStats[]
 }
 
 export interface ProcessedDiskStats {
-    readonly diskReadX: ProcessedStats[],
-    readonly diskWriteX: ProcessedStats[],
+  readonly diskReadX: ProcessedStats[]
+  readonly diskWriteX: ProcessedStats[]
 }
 
 export interface LineGraphOptions {
-    readonly label: string,
-    readonly axisColor: string,
-    readonly line: {
-        readonly label: string,
-        readonly color: string,
-        readonly points: ProcessedStats[]
-    }
+  readonly label: string
+  readonly axisColor: string
+  readonly line: {
+    readonly label: string
+    readonly color: string
+    readonly points: ProcessedStats[]
+  }
 }
 
 export interface StackedArea {
-    readonly label: string,
-    readonly color: string,
-    readonly points: ProcessedStats[]
+  readonly label: string
+  readonly color: string
+  readonly points: ProcessedStats[]
 }
 
 export interface StackedAreaGraphOptions {
-    readonly label: string,
-    readonly axisColor: string,
-    readonly areas: StackedArea[]
+  readonly label: string
+  readonly axisColor: string
+  readonly areas: StackedArea[]
 }
 
 export interface GraphResponse {
-    readonly id: string,
-    readonly url: string
+  readonly id: string
+  readonly url: string
 }
 
 export interface CompletedCommand {
-    readonly ts: string,
-    readonly event: string,
-    readonly name: string,
-    readonly uid: number,
-    readonly pid: number,
-    readonly ppid: string,
-    readonly startTime: number,
-    readonly fileName: string,
-    readonly args: string[],
-    readonly duration: number,
-    readonly exitCode: number
+  readonly ts: string
+  readonly event: string
+  readonly name: string
+  readonly uid: number
+  readonly pid: number
+  readonly ppid: string
+  readonly startTime: number
+  readonly fileName: string
+  readonly args: string[]
+  readonly duration: number
+  readonly exitCode: number
 }
 
 export interface ProcEventParseOptions {
-    readonly minDuration: number,
-    readonly traceSystemProcesses: boolean
+  readonly minDuration: number
+  readonly traceSystemProcesses: boolean
 }
+
+export interface FileEvent {
+  readonly time: number
+  readonly procName: string
+  readonly uid: number
+  readonly pid: number
+  readonly ppid: string
+  readonly pwdDepth: number
+  readonly pwd: string
+  readonly fileName: string
+  readonly flags: number
+  readonly mode: number
+}
+
+export interface FileEventParseOptions {}

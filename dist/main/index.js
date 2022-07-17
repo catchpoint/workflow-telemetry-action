@@ -79946,6 +79946,411 @@ XRegExp = XRegExp || (function (undef) {
 
 /***/ }),
 
+/***/ 4988:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parse = void 0;
+const fs = __importStar(__webpack_require__(5747));
+const path_1 = __importDefault(__webpack_require__(5622));
+const readline = __importStar(__webpack_require__(1058));
+const logger = __importStar(__webpack_require__(4636));
+function resolveFileNameIfRelative(event) {
+    // Check whether file name is relative path
+    if (event.fileName && event.fileName.charAt(0) !== '/') {
+        // If the file name is relative path, resolve real path
+        const resolvedFileName = path_1.default.resolve(event.pwd, event.fileName);
+        if (logger.isDebugEnabled()) {
+            logger.debug(`Resolved file name ${event.fileName} to ${resolvedFileName}`);
+        }
+        event.fileName = resolvedFileName;
+    }
+}
+function parse(filePath, fileEventParseOptions) {
+    var e_1, _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        const fileStream = fs.createReadStream(filePath);
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+        });
+        // Note: we use the crlfDelay option to recognize all instances of CR LF
+        // ('\r\n') in input file as a single line break.
+        const fileEvents = [];
+        try {
+            for (var rl_1 = __asyncValues(rl), rl_1_1; rl_1_1 = yield rl_1.next(), !rl_1_1.done;) {
+                let line = rl_1_1.value;
+                line = line.trim();
+                if (!line || !line.length) {
+                    continue;
+                }
+                try {
+                    const event = JSON.parse(line);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(`Parsing trace file event: ${line}`);
+                    }
+                    resolveFileNameIfRelative(event);
+                    fileEvents.push({
+                        time: event.time,
+                        procName: event.procName,
+                        uid: event.uid,
+                        pid: event.pid,
+                        ppid: event.ppid,
+                        pwdDepth: event.pwdDepth,
+                        pwd: event.pwd,
+                        fileName: event.fileName,
+                        flags: event.flags,
+                        mode: event.mode
+                    });
+                }
+                catch (error) {
+                    logger.debug(`Unable to parse file trace event (${error}): ${line}`);
+                }
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (rl_1_1 && !rl_1_1.done && (_a = rl_1.return)) yield _a.call(rl_1);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        fileEvents.sort((a, b) => {
+            return a.time - b.time;
+        });
+        if (logger.isDebugEnabled()) {
+            logger.debug(`File events: ${JSON.stringify(fileEvents)}`);
+        }
+        return fileEvents;
+    });
+}
+exports.parse = parse;
+
+
+/***/ }),
+
+/***/ 5050:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.report = exports.finish = exports.start = void 0;
+const child_process_1 = __webpack_require__(3129);
+const path_1 = __importDefault(__webpack_require__(5622));
+const core = __importStar(__webpack_require__(2186));
+const systeminformation_1 = __importDefault(__webpack_require__(9284));
+const sprintf_js_1 = __webpack_require__(296);
+const fileTraceParser_1 = __webpack_require__(4988);
+const logger = __importStar(__webpack_require__(4636));
+const action_1 = __webpack_require__(1231);
+const github = __importStar(__webpack_require__(5438));
+const FILE_TRACER_PID_KEY = 'FILE_TRACER_PID';
+const FILE_TRACER_OUTPUT_FILE_NAME = 'file-trace.out';
+const FILE_TRACER_BINARY_NAME_UBUNTU_20 = 'file-tracer_ubuntu_20';
+// From "https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h"
+// #define O_ACCMODE	00000003
+const O_ACCMODE = 3;
+// #define O_DIRECTORY	00200000	/* must be a directory */
+const O_DIRECTORY = 2 << (3 * 5);
+let finished = false;
+function getFileTracerBinaryName() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const osInfo = yield systeminformation_1.default.osInfo();
+        if (osInfo) {
+            // Check whether we are running on Ubuntu
+            if (osInfo.distro === 'Ubuntu') {
+                const majorVersion = parseInt(osInfo.release.split('.')[0]);
+                if (majorVersion === 20) {
+                    return FILE_TRACER_BINARY_NAME_UBUNTU_20;
+                }
+            }
+        }
+        logger.info(`File tracing disabled because of unsupported OS: ${JSON.stringify(osInfo)}`);
+        return null;
+    });
+}
+///////////////////////////
+function start() {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Starting file tracer ...`);
+        try {
+            const fileTracerBinaryName = yield getFileTracerBinaryName();
+            if (fileTracerBinaryName) {
+                const fileTraceOutFilePath = path_1.default.join(__dirname, '../file-tracer', FILE_TRACER_OUTPUT_FILE_NAME);
+                const child = (0, child_process_1.spawn)('sudo', [
+                    path_1.default.join(__dirname, `../file-tracer/${fileTracerBinaryName}`),
+                    '-p', `${process.env.GITHUB_WORKSPACE}`,
+                    '-f', 'json',
+                    '-o', fileTraceOutFilePath
+                ], {
+                    detached: true,
+                    stdio: 'ignore',
+                    env: Object.assign({}, process.env)
+                });
+                child.unref();
+                core.saveState(FILE_TRACER_PID_KEY, (_a = child.pid) === null || _a === void 0 ? void 0 : _a.toString());
+                logger.info(`Started file tracer`);
+            }
+        }
+        catch (error) {
+            logger.error('Unable to start file tracer');
+            logger.error(error);
+        }
+    });
+}
+exports.start = start;
+function finish() {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Finishing file tracer ...`);
+        const fileTracerPID = core.getState(FILE_TRACER_PID_KEY);
+        if (!fileTracerPID) {
+            logger.info(`Skipped finishing file tracer since file tracer didn't started`);
+            return;
+        }
+        try {
+            logger.debug(`Interrupting file tracer with pid ${fileTracerPID} to stop gracefully ...`);
+            yield (0, child_process_1.exec)(`sudo kill -s INT ${fileTracerPID}`);
+            finished = true;
+            logger.info(`Finished file tracer`);
+        }
+        catch (error) {
+            logger.error('Unable to finish file tracer');
+            logger.error(error);
+        }
+    });
+}
+exports.finish = finish;
+function shouldIgnoreFileEvent(event) {
+    // Check whether it is accessed from Git
+    if (event.procName === 'git') {
+        logger.debug(`Ignoring trace file event as it is accessed from git`);
+        return true;
+    }
+    // Check whether file is located in the workspace
+    if (process.env.GITHUB_WORKSPACE && !event.fileName.startsWith(process.env.GITHUB_WORKSPACE)) {
+        logger.debug(`Ignoring trace file event as it is not located in the workspace at ${process.env.GITHUB_WORKSPACE}`);
+        return true;
+    }
+    // Check whether it is directory
+    if ((event.flags & O_DIRECTORY) == O_DIRECTORY) {
+        logger.debug(`Ignoring trace file event as it is directory`);
+        return true;
+    }
+    // Check whether it is read-only access
+    if ((event.flags & O_ACCMODE) != 0) {
+        logger.debug(`Ignoring trace file event as it is not read-only access`);
+        return true;
+    }
+    return false;
+}
+function report() {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Reporting file tracer result ...`);
+        if (!finished) {
+            logger.info(`Skipped reporting file tracer since file tracer didn't finished`);
+            return;
+        }
+        try {
+            const fileTraceOutFilePath = path_1.default.join(__dirname, '../file-tracer', FILE_TRACER_OUTPUT_FILE_NAME);
+            logger.info(`Getting file tracer result from file ${fileTraceOutFilePath} ...`);
+            const fileEvents = yield (0, fileTraceParser_1.parse)(fileTraceOutFilePath, {});
+            const filteredFileEvents = fileEvents.filter((fileEvent) => {
+                return !shouldIgnoreFileEvent(fileEvent);
+            });
+            const accessedFileMap = new Map();
+            for (let event of filteredFileEvents) {
+                let count = accessedFileMap.get(event.fileName) || 0;
+                accessedFileMap.set(event.fileName, ++count);
+            }
+            const sortedAccessedFileMap = new Map([...accessedFileMap.entries()].sort((a, b) => b[1] - a[1]));
+            try {
+                yield reportNotUsedFilesInPR(sortedAccessedFileMap);
+            }
+            catch (error) {
+                logger.error('Unable to report not used files in PR');
+                logger.error(error);
+            }
+            try {
+                yield reportAccessedFiles(sortedAccessedFileMap);
+            }
+            catch (error) {
+                logger.error('Unable to report accessed files');
+                logger.error(error);
+            }
+            logger.info(`Reported file tracer result`);
+        }
+        catch (error) {
+            logger.error('Unable to report file tracer result');
+            logger.error(error);
+        }
+    });
+}
+exports.report = report;
+function reportNotUsedFilesInPR(sortedAccessedFileMap) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { pull_request } = github.context.payload;
+        if (pull_request) {
+            if (logger.isDebugEnabled()) {
+                logger.info(`Pull request: ${JSON.stringify(pull_request)}`);
+            }
+            const octokit = new action_1.Octokit();
+            const response = yield octokit.rest.pulls.listFiles({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: pull_request.number,
+            });
+            if (logger.isDebugEnabled()) {
+                logger.info(`Response: ${JSON.stringify(response)}`);
+            }
+            if (response.status === 200 && response.data && response.data.length) {
+                const notUsedFiles = [];
+                for (let file of response.data) {
+                    if (file.filename.startsWith('.github/')) {
+                        continue;
+                    }
+                    if (file.status === 'added' || file.status === 'modified') {
+                        const filePath = `${process.env.GITHUB_WORKSPACE}/${file.filename}`;
+                        if (logger.isDebugEnabled()) {
+                            logger.info(`Changed file path: ${filePath}`);
+                        }
+                        const accessed = sortedAccessedFileMap.has(filePath);
+                        if (!accessed) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(`Not used file in PR: ${file.filename}`);
+                            }
+                            notUsedFiles.push(file.filename);
+                        }
+                    }
+                }
+                if (logger.isDebugEnabled()) {
+                    logger.debug(`Not used files in PR: ${JSON.stringify(notUsedFiles)}`);
+                }
+                const fileInfos = [];
+                for (let notUsedFile of notUsedFiles) {
+                    fileInfos.push(`- ${notUsedFile}`);
+                }
+                const postContentItems = [
+                    '',
+                    '### Not Used Files in PR',
+                    '',
+                    '```' + '\n' + fileInfos.join('\n') + '\n' + '```',
+                ];
+                const postContent = postContentItems.join('\n');
+                const jobSummary = core.getInput('job_summary');
+                if ('true' === jobSummary) {
+                    core.summary.addRaw(postContent);
+                    yield core.summary.write();
+                }
+            }
+        }
+    });
+}
+function reportAccessedFiles(sortedAccessedFileMap) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const fileInfos = [];
+        fileInfos.push((0, sprintf_js_1.sprintf)("%10s %s", "COUNT", "FILE NAME"));
+        for (let entry of sortedAccessedFileMap.entries()) {
+            fileInfos.push((0, sprintf_js_1.sprintf)("%10d %s", entry[1], entry[0]));
+        }
+        const postContentItems = [
+            '',
+            '### Accessed Files',
+            '',
+            '```' + '\n' + fileInfos.join('\n') + '\n' + '```',
+        ];
+        const postContent = postContentItems.join('\n');
+        const jobSummary = core.getInput('job_summary');
+        if ('true' === jobSummary) {
+            core.summary.addRaw(postContent);
+            yield core.summary.write();
+        }
+    });
+}
+
+
+/***/ }),
+
 /***/ 4636:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -80045,6 +80450,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(2186));
 const statCollector = __importStar(__webpack_require__(6451));
 const processTracer = __importStar(__webpack_require__(7728));
+const fileTracer = __importStar(__webpack_require__(5050));
 const logger = __importStar(__webpack_require__(4636));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -80054,6 +80460,8 @@ function run() {
             yield statCollector.start();
             // Start process tracer
             yield processTracer.start();
+            // Start file tracer
+            yield fileTracer.start();
             logger.info(`Initialization completed`);
         }
         catch (error) {

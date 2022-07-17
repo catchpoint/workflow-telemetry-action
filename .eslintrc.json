@@ -1,6 +1,5 @@
 {
   "plugins": [
-    "jest",
     "@typescript-eslint"
   ],
   "extends": [
@@ -41,7 +40,6 @@
       "never"
     ],
     "@typescript-eslint/no-array-constructor": "error",
-    "@typescript-eslint/no-empty-interface": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-extraneous-class": "error",
     "@typescript-eslint/no-for-in-array": "error",
@@ -70,7 +68,6 @@
   },
   "env": {
     "node": true,
-    "es6": true,
-    "jest/globals": true
+    "es6": true
   }
 }
