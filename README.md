@@ -1,10 +1,16 @@
 # workflow-telemetry-action
 
-A GitHub Action to track and monitor the resource metrics and process activities of your GitHub Action workflow runs. 
+A GitHub Action to track and monitor the 
+- workflow runs, jobs and steps
+- resource metrics 
+- and process activities 
+of your GitHub Action workflow runs. 
 If the run is triggered via a Pull Request, it will create a comment on the connected PR with the results 
 and/or publishes the results to the job summary. 
 
-The action collects the following metrics:
+The action traces the jobs' step executions and shows them in trace chart,
+
+And collects the following metrics:
 - CPU Load (user and system) in percentage
 - Memory usage (used and free) in MB
 - Network I/O (read and write) in MB
@@ -25,7 +31,9 @@ And traces the process executions with the following information (only supported
 
 An example output of a simple workflow run will look like this.
 
-![PR Comment Example](/images/pr-comment-example.png)
+![Step Trace Example](/images/step-trace-example.png)
+
+![Metrics Example](/images/metrics-example.png)
 
 ## Usage
 
