@@ -3,7 +3,7 @@ import * as core from '@actions/core'
 const LOG_HEADER: string = '[Workflow Telemetry]'
 
 export function isDebugEnabled(): boolean {
-  return core.isDebug();
+  return core.isDebug()
 }
 
 export function debug(msg: string) {
