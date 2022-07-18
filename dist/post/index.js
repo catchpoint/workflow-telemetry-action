@@ -10165,7 +10165,7 @@ var httpsFollow = __webpack_require__(7707).https;
 var url = __webpack_require__(8835);
 var zlib = __webpack_require__(8761);
 var VERSION = __webpack_require__(4322).version;
-var transitionalDefaults = __webpack_require__(936);
+var transitionalDefaults = __webpack_require__(3199);
 var AxiosError = __webpack_require__(2093);
 var CanceledError = __webpack_require__(4098);
 
@@ -10593,7 +10593,7 @@ var buildURL = __webpack_require__(646);
 var buildFullPath = __webpack_require__(1934);
 var parseHeaders = __webpack_require__(6455);
 var isURLSameOrigin = __webpack_require__(3608);
-var transitionalDefaults = __webpack_require__(936);
+var transitionalDefaults = __webpack_require__(3199);
 var AxiosError = __webpack_require__(2093);
 var CanceledError = __webpack_require__(4098);
 var parseProtocol = __webpack_require__(6107);
@@ -11688,7 +11688,7 @@ module.exports = __webpack_require__(4334);
 var utils = __webpack_require__(328);
 var normalizeHeaderName = __webpack_require__(6240);
 var AxiosError = __webpack_require__(2093);
-var transitionalDefaults = __webpack_require__(936);
+var transitionalDefaults = __webpack_require__(3199);
 var toFormData = __webpack_require__(470);
 
 var DEFAULT_CONTENT_TYPE = {
@@ -11833,7 +11833,7 @@ module.exports = defaults;
 
 /***/ }),
 
-/***/ 936:
+/***/ 3199:
 /***/ ((module) => {
 
 "use strict";
@@ -13298,7 +13298,7 @@ function parse(val) {
 
 var util = __webpack_require__(1669);
 var Stream = __webpack_require__(2413).Stream;
-var DelayedStream = __webpack_require__(8611);
+var DelayedStream = __webpack_require__(5753);
 
 module.exports = CombinedStream;
 function CombinedStream() {
@@ -14720,7 +14720,7 @@ module.exports = degenerator;
 
 /***/ }),
 
-/***/ 8611:
+/***/ 5753:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var Stream = __webpack_require__(2413).Stream;
@@ -39190,7 +39190,7 @@ exports.default = dateRange;
 
 /***/ }),
 
-/***/ 37:
+/***/ 936:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -39326,7 +39326,7 @@ const degenerator_1 = __webpack_require__(4033);
  * Built-in PAC functions.
  */
 const dateRange_1 = __importDefault(__webpack_require__(4001));
-const dnsDomainIs_1 = __importDefault(__webpack_require__(37));
+const dnsDomainIs_1 = __importDefault(__webpack_require__(936));
 const dnsDomainLevels_1 = __importDefault(__webpack_require__(8595));
 const dnsResolve_1 = __importDefault(__webpack_require__(7685));
 const isInNet_1 = __importDefault(__webpack_require__(3815));
@@ -66920,7 +66920,7 @@ const {
 } = __webpack_require__(2989);
 const {
 	VMScript
-} = __webpack_require__(3889);
+} = __webpack_require__(8611);
 const {
 	VM
 } = __webpack_require__(3841);
@@ -66972,7 +66972,7 @@ const {
 	MODULE_PREFIX,
 	STRICT_MODULE_PREFIX,
 	MODULE_SUFFIX
-} = __webpack_require__(3889);
+} = __webpack_require__(8611);
 const {
 	transformer
 } = __webpack_require__(3342);
@@ -67465,7 +67465,7 @@ const {
 	Resolver,
 	DefaultResolver
 } = __webpack_require__(8038);
-const {VMScript} = __webpack_require__(3889);
+const {VMScript} = __webpack_require__(8611);
 const {VM} = __webpack_require__(3841);
 const {VMError} = __webpack_require__(2989);
 
@@ -67811,7 +67811,7 @@ const fs = __webpack_require__(5747);
 const {
 	VMError
 } = __webpack_require__(2989);
-const { VMScript } = __webpack_require__(3889);
+const { VMScript } = __webpack_require__(8611);
 
 // This should match. Note that '\', '%' are invalid characters
 // 1. name/.*
@@ -68687,7 +68687,7 @@ exports.DefaultResolver = DefaultResolver;
 
 /***/ }),
 
-/***/ 3889:
+/***/ 8611:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -69315,7 +69315,7 @@ const {
 } = __webpack_require__(6400);
 const {
 	VMScript
-} = __webpack_require__(3889);
+} = __webpack_require__(8611);
 
 const objectDefineProperties = Object.defineProperties;
 
@@ -80043,21 +80043,122 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(2186));
+const github = __importStar(__webpack_require__(5438));
+const action_1 = __webpack_require__(1231);
+const stepTracer = __importStar(__webpack_require__(377));
 const statCollector = __importStar(__webpack_require__(6451));
 const processTracer = __importStar(__webpack_require__(7728));
 const logger = __importStar(__webpack_require__(4636));
+const { pull_request } = github.context.payload;
+const { workflow, job, repo, runId, sha } = github.context;
+const PAGE_SIZE = 100;
+const octokit = new action_1.Octokit();
+function getCurrentJob() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const _getCurrentJob = () => __awaiter(this, void 0, void 0, function* () {
+            for (let page = 0;; page++) {
+                const result = yield octokit.rest.actions.listJobsForWorkflowRun({
+                    owner: repo.owner,
+                    repo: repo.repo,
+                    run_id: runId,
+                    per_page: PAGE_SIZE,
+                    page
+                });
+                const jobs = result.data.jobs;
+                // If there are no jobs, stop here
+                if (!jobs || !jobs.length) {
+                    break;
+                }
+                const currentJobs = jobs.filter(it => it.status === 'in_progress' &&
+                    it.runner_name === process.env.RUNNER_NAME);
+                if (currentJobs && currentJobs.length) {
+                    return currentJobs[0];
+                }
+                // Since returning job count is less than page size, this means that there are no other jobs.
+                // So no need to make another request for the next page.
+                if (jobs.length < PAGE_SIZE) {
+                    break;
+                }
+            }
+            return null;
+        });
+        for (let i = 0; i < 10; i++) {
+            const currentJob = yield _getCurrentJob();
+            if (currentJob && currentJob.id) {
+                return currentJob;
+            }
+            yield new Promise(r => setTimeout(r, 1000));
+        }
+        return null;
+    });
+}
+function reportAll(currentJob, content) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Reporting all content ...`);
+        logger.debug(`Workflow - Job: ${workflow} - ${job}`);
+        const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${currentJob.id}?check_suite_focus=true`;
+        logger.debug(`Job url: ${jobUrl}`);
+        const title = `## Workflow Telemetry - ${workflow} / ${currentJob.name}`;
+        logger.debug(`Title: ${title}`);
+        const commit = (pull_request && pull_request.head && pull_request.head.sha) || sha;
+        logger.debug(`Commit: ${commit}`);
+        const commitUrl = `https://github.com/${repo.owner}/${repo.repo}/commit/${commit}`;
+        logger.debug(`Commit url: ${commitUrl}`);
+        const info = `Workflow telemetry for commit [${commit}](${commitUrl})\n` +
+            `You can access workflow job details [here](${jobUrl})`;
+        const postContent = [title, info, content].join('\n');
+        const jobSummary = core.getInput('job_summary');
+        if ('true' === jobSummary) {
+            core.summary.addRaw(postContent);
+            yield core.summary.write();
+        }
+        const commentOnPR = core.getInput('comment_on_pr');
+        if (pull_request && 'true' === commentOnPR) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
+            }
+            yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: postContent }));
+        }
+        else {
+            logger.debug(`Couldn't find Pull Request`);
+        }
+        logger.info(`Reporting all content completed`);
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             logger.info(`Finishing ...`);
+            const currentJob = yield getCurrentJob();
+            if (!currentJob) {
+                logger.error("Couldn't find current job");
+                return;
+            }
+            logger.debug(`Current job: ${JSON.stringify(currentJob)}`);
+            // Finish step tracer
+            yield stepTracer.finish(currentJob);
             // Finish stat collector
-            yield statCollector.finish();
+            yield statCollector.finish(currentJob);
             // Finish process tracer
-            yield processTracer.finish();
+            yield processTracer.finish(currentJob);
+            // Report step tracer
+            const stepTracerContent = yield stepTracer.report(currentJob);
             // Report stat collector
-            yield statCollector.report();
+            const stepCollectorContent = yield statCollector.report(currentJob);
             // Report process tracer
-            yield processTracer.report();
+            const procTracerContent = yield processTracer.report(currentJob);
+            let allContent = '';
+            if (stepTracerContent) {
+                allContent = allContent.concat(stepTracerContent, '\n');
+            }
+            if (stepCollectorContent) {
+                allContent = allContent.concat(stepCollectorContent, '\n');
+            }
+            if (procTracerContent) {
+                allContent = allContent.concat(procTracerContent, '\n');
+            }
+            yield reportAll(currentJob, allContent);
             logger.info(`Finish completed`);
         }
         catch (error) {
@@ -80142,7 +80243,8 @@ function parse(filePath, procEventParseOptions) {
     var e_1, _a;
     return __awaiter(this, void 0, void 0, function* () {
         const minDuration = (procEventParseOptions && procEventParseOptions.minDuration) || -1;
-        const traceSystemProcesses = (procEventParseOptions && procEventParseOptions.traceSystemProcesses) || false;
+        const traceSystemProcesses = (procEventParseOptions && procEventParseOptions.traceSystemProcesses) ||
+            false;
         const fileStream = fs.createReadStream(filePath);
         const rl = readline.createInterface({
             input: fileStream,
@@ -80207,7 +80309,8 @@ function parse(filePath, procEventParseOptions) {
                             replacedCommandCompleted = true;
                         }
                         // Complete the replaced command first if there is
-                        if (replacedCommandCompleted && replacedCommand.duration > minDuration) {
+                        if (replacedCommandCompleted &&
+                            replacedCommand.duration > minDuration) {
                             completedCommands.push(replacedCommand);
                         }
                         // Then complete the actual command
@@ -80329,8 +80432,10 @@ function start() {
                 const procTraceOutFilePath = path_1.default.join(__dirname, '../proc-tracer', PROC_TRACER_OUTPUT_FILE_NAME);
                 const child = (0, child_process_1.spawn)('sudo', [
                     path_1.default.join(__dirname, `../proc-tracer/${procTracerBinaryName}`),
-                    '-f', 'json',
-                    '-o', procTraceOutFilePath
+                    '-f',
+                    'json',
+                    '-o',
+                    procTraceOutFilePath
                 ], {
                     detached: true,
                     stdio: 'ignore',
@@ -80339,42 +80444,49 @@ function start() {
                 child.unref();
                 core.saveState(PROC_TRACER_PID_KEY, (_a = child.pid) === null || _a === void 0 ? void 0 : _a.toString());
                 logger.info(`Started process tracer`);
+                return true;
+            }
+            else {
+                return false;
             }
         }
         catch (error) {
             logger.error('Unable to start process tracer');
             logger.error(error);
+            return false;
         }
     });
 }
 exports.start = start;
-function finish() {
+function finish(currentJob) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Finishing process tracer ...`);
         const procTracePID = core.getState(PROC_TRACER_PID_KEY);
         if (!procTracePID) {
             logger.info(`Skipped finishing process tracer since process tracer didn't started`);
-            return;
+            return false;
         }
         try {
             logger.debug(`Interrupting process tracer with pid ${procTracePID} to stop gracefully ...`);
-            yield (0, child_process_1.exec)(`sudo kill -s INT ${procTracePID}`);
+            (0, child_process_1.exec)(`sudo kill -s INT ${procTracePID}`);
             finished = true;
             logger.info(`Finished process tracer`);
+            return true;
         }
         catch (error) {
             logger.error('Unable to finish process tracer');
             logger.error(error);
+            return false;
         }
     });
 }
 exports.finish = finish;
-function report() {
+function report(currentJob) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Reporting process tracer result ...`);
         if (!finished) {
             logger.info(`Skipped reporting process tracer since process tracer didn't finished`);
-            return;
+            return null;
         }
         try {
             const procTraceOutFilePath = path_1.default.join(__dirname, '../proc-tracer', PROC_TRACER_OUTPUT_FILE_NAME);
@@ -80393,27 +80505,24 @@ function report() {
                 traceSystemProcesses: traceSysProcs
             });
             const commandInfos = [];
-            commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s", "TIME", "NAME", "UID", "PID", "PPID", "START TIME", "DURATION (ms)", "EXIT CODE", "FILE NAME + ARGS"));
-            for (let command of completedCommands) {
-                commandInfos.push((0, sprintf_js_1.sprintf)("%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s", command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
+            commandInfos.push((0, sprintf_js_1.sprintf)('%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s', 'TIME', 'NAME', 'UID', 'PID', 'PPID', 'START TIME', 'DURATION (ms)', 'EXIT CODE', 'FILE NAME + ARGS'));
+            for (const command of completedCommands) {
+                commandInfos.push((0, sprintf_js_1.sprintf)('%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s', command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
             }
             const postContentItems = [
                 '',
                 '### Process Traces',
                 '',
-                '```' + '\n' + commandInfos.join('\n') + '\n' + '```',
+                '```' + '\n' + commandInfos.join('\n') + '\n' + '```'
             ];
             const postContent = postContentItems.join('\n');
-            const jobSummary = core.getInput('job_summary');
-            if ('true' === jobSummary) {
-                core.summary.addRaw(postContent);
-                yield core.summary.write();
-            }
             logger.info(`Reported process tracer result`);
+            return postContent;
         }
         catch (error) {
             logger.error('Unable to report process tracer result');
             logger.error(error);
+            return null;
         }
     });
 }
@@ -80468,15 +80577,10 @@ const child_process_1 = __webpack_require__(3129);
 const path_1 = __importDefault(__webpack_require__(5622));
 const axios_1 = __importDefault(__webpack_require__(6545));
 const core = __importStar(__webpack_require__(2186));
-const action_1 = __webpack_require__(1231);
-const github = __importStar(__webpack_require__(5438));
 const logger = __importStar(__webpack_require__(4636));
 const STAT_SERVER_PORT = 7777;
-const PAGE_SIZE = 100;
 const BLACK = '#000000';
 const WHITE = '#FFFFFF';
-const { pull_request } = github.context.payload;
-const { workflow, job, repo, runId, sha } = github.context;
 function triggerStatCollect() {
     return __awaiter(this, void 0, void 0, function* () {
         logger.debug('Triggering stat collect ...');
@@ -80487,7 +80591,6 @@ function triggerStatCollect() {
     });
 }
 function reportWorkflowMetrics() {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const theme = core.getInput('theme', { required: false });
         let axisColor = BLACK;
@@ -80506,7 +80609,7 @@ function reportWorkflowMetrics() {
         const { networkReadX, networkWriteX } = yield getNetworkStats();
         const { diskReadX, diskWriteX } = yield getDiskStats();
         const cpuLoad = userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
-            ? (yield getStackedAreaGraph({
+            ? yield getStackedAreaGraph({
                 label: 'CPU Load (%)',
                 axisColor,
                 areas: [
@@ -80521,10 +80624,13 @@ function reportWorkflowMetrics() {
                         points: systemLoadX
                     }
                 ]
-            }))
+            })
             : null;
-        const memoryUsage = activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
-            ? (yield getStackedAreaGraph({
+        const memoryUsage = activeMemoryX &&
+            activeMemoryX.length &&
+            availableMemoryX &&
+            availableMemoryX.length
+            ? yield getStackedAreaGraph({
                 label: 'Memory Usage (MB)',
                 axisColor,
                 areas: [
@@ -80539,10 +80645,10 @@ function reportWorkflowMetrics() {
                         points: availableMemoryX
                     }
                 ]
-            }))
+            })
             : null;
         const networkIORead = networkReadX && networkReadX.length
-            ? (yield getLineGraph({
+            ? yield getLineGraph({
                 label: 'Network I/O Read (MB)',
                 axisColor,
                 line: {
@@ -80550,10 +80656,10 @@ function reportWorkflowMetrics() {
                     color: '#be4d25',
                     points: networkReadX
                 }
-            }))
+            })
             : null;
         const networkIOWrite = networkWriteX && networkWriteX.length
-            ? (yield getLineGraph({
+            ? yield getLineGraph({
                 label: 'Network I/O Write (MB)',
                 axisColor,
                 line: {
@@ -80561,10 +80667,10 @@ function reportWorkflowMetrics() {
                     color: '#6c25be',
                     points: networkWriteX
                 }
-            }))
+            })
             : null;
         const diskIORead = diskReadX && diskReadX.length
-            ? (yield getLineGraph({
+            ? yield getLineGraph({
                 label: 'Disk I/O Read (MB)',
                 axisColor,
                 line: {
@@ -80572,10 +80678,10 @@ function reportWorkflowMetrics() {
                     color: '#be4d25',
                     points: diskReadX
                 }
-            }))
+            })
             : null;
         const diskIOWrite = diskWriteX && diskWriteX.length
-            ? (yield getLineGraph({
+            ? yield getLineGraph({
                 label: 'Disk I/O Write (MB)',
                 axisColor,
                 line: {
@@ -80583,35 +80689,9 @@ function reportWorkflowMetrics() {
                     color: '#6c25be',
                     points: diskWriteX
                 }
-            }))
+            })
             : null;
-        const octokit = new action_1.Octokit();
-        logger.debug(`Workflow - Job: ${workflow} - ${job}`);
-        let commit = (pull_request && pull_request.head && pull_request.head.sha) || sha;
-        logger.debug(`Commit: ${commit}`);
-        const jobInfo = yield getJobInfo(octokit);
-        logger.debug(`Job info: ${JSON.stringify(jobInfo)}`);
-        let title = `## Workflow Telemetry - ${workflow}`;
-        if (jobInfo.name) {
-            title = `${title} / ${jobInfo.name}`;
-        }
-        else {
-            title = `${title} / ${job}`;
-        }
-        const commitUrl = `https://github.com/${repo.owner}/${repo.repo}/commit/${commit}`;
-        logger.debug(`Commit url: ${commitUrl}`);
-        let info = `Workflow telemetry for commit [${commit}](${commitUrl})`;
-        if (jobInfo.id) {
-            const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`;
-            logger.debug(`Job url: ${jobUrl}`);
-            info = `${info}\nYou can access workflow job details [here](${jobUrl})`;
-        }
-        const postContentItems = [
-            title,
-            '',
-            info,
-            '',
-        ];
+        const postContentItems = [];
         if (cpuLoad) {
             postContentItems.push('### CPU Metrics', `![${cpuLoad.id}](${cpuLoad.url})`, '');
         }
@@ -80627,28 +80707,13 @@ function reportWorkflowMetrics() {
         if (diskIORead && diskIOWrite) {
             postContentItems.push(`| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`);
         }
-        const postContent = postContentItems.join('\n');
-        const jobSummary = core.getInput('job_summary');
-        if ('true' === jobSummary) {
-            core.summary.addRaw(postContent);
-            yield core.summary.write();
-        }
-        const commentOnPR = core.getInput('comment_on_pr');
-        if (pull_request && 'true' === commentOnPR) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
-            }
-            yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: postContent }));
-        }
-        else {
-            logger.debug(`Couldn't find Pull Request`);
-        }
+        return postContentItems.join('\n');
     });
 }
 function getCPUStats() {
     return __awaiter(this, void 0, void 0, function* () {
-        let userLoadX = [];
-        let systemLoadX = [];
+        const userLoadX = [];
+        const systemLoadX = [];
         logger.debug('Getting CPU stats ...');
         const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/cpu`);
         if (logger.isDebugEnabled()) {
@@ -80669,8 +80734,8 @@ function getCPUStats() {
 }
 function getMemoryStats() {
     return __awaiter(this, void 0, void 0, function* () {
-        let activeMemoryX = [];
-        let availableMemoryX = [];
+        const activeMemoryX = [];
+        const availableMemoryX = [];
         logger.debug('Getting memory stats ...');
         const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/memory`);
         if (logger.isDebugEnabled()) {
@@ -80691,8 +80756,8 @@ function getMemoryStats() {
 }
 function getNetworkStats() {
     return __awaiter(this, void 0, void 0, function* () {
-        let networkReadX = [];
-        let networkWriteX = [];
+        const networkReadX = [];
+        const networkWriteX = [];
         logger.debug('Getting network stats ...');
         const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/network`);
         if (logger.isDebugEnabled()) {
@@ -80713,8 +80778,8 @@ function getNetworkStats() {
 }
 function getDiskStats() {
     return __awaiter(this, void 0, void 0, function* () {
-        let diskReadX = [];
-        let diskWriteX = [];
+        const diskReadX = [];
+        const diskWriteX = [];
         logger.debug('Getting disk stats ...');
         const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/disk`);
         if (logger.isDebugEnabled()) {
@@ -80777,48 +80842,6 @@ function getStackedAreaGraph(options) {
         return response.data;
     });
 }
-function getJobInfo(octokit) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const _getJobInfo = () => __awaiter(this, void 0, void 0, function* () {
-            for (let page = 0; true; page++) {
-                const result = yield octokit.rest.actions.listJobsForWorkflowRun({
-                    owner: repo.owner,
-                    repo: repo.repo,
-                    run_id: runId,
-                    per_page: PAGE_SIZE,
-                    page
-                });
-                const jobs = result.data.jobs;
-                // If there are no jobs, stop here
-                if (!jobs || !jobs.length) {
-                    break;
-                }
-                const currentJobs = jobs.filter(it => it.status === 'in_progress' &&
-                    it.runner_name === process.env.RUNNER_NAME);
-                if (currentJobs && currentJobs.length) {
-                    return {
-                        id: currentJobs[0].id,
-                        name: currentJobs[0].name
-                    };
-                }
-                // Since returning job count is less than page size, this means that there are no other jobs.
-                // So no need to make another request for the next page.
-                if (jobs.length < PAGE_SIZE) {
-                    break;
-                }
-            }
-            return {};
-        });
-        for (let i = 0; i < 10; i++) {
-            const currentJobInfo = yield _getJobInfo();
-            if (currentJobInfo && currentJobInfo.id) {
-                return currentJobInfo;
-            }
-            yield new Promise(r => setTimeout(r, 1000));
-        }
-        return {};
-    });
-}
 ///////////////////////////
 function start() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -80835,43 +80858,194 @@ function start() {
             const child = (0, child_process_1.spawn)(process.argv[0], [path_1.default.join(__dirname, '../scw/index.js')], {
                 detached: true,
                 stdio: 'ignore',
-                env: Object.assign(Object.assign({}, process.env), { WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency ? `${statFrequency}` : undefined })
+                env: Object.assign(Object.assign({}, process.env), { WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency
+                        ? `${statFrequency}`
+                        : undefined })
             });
             child.unref();
             logger.info(`Started stat collector`);
+            return true;
         }
         catch (error) {
             logger.error('Unable to start stat collector');
             logger.error(error);
+            return false;
         }
     });
 }
 exports.start = start;
-function finish() {
+function finish(currentJob) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Finishing stat collector ...`);
         try {
             // Trigger stat collect, so we will have remaining stats since the latest schedule
             yield triggerStatCollect();
             logger.info(`Finished stat collector`);
+            return true;
         }
         catch (error) {
             logger.error('Unable to finish stat collector');
             logger.error(error);
+            return false;
         }
     });
 }
 exports.finish = finish;
-function report() {
+function report(currentJob) {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Reporting stat collector result ...`);
         try {
-            yield reportWorkflowMetrics();
+            const postContent = yield reportWorkflowMetrics();
             logger.info(`Reported stat collector result`);
+            return postContent;
         }
         catch (error) {
             logger.error('Unable to report stat collector result');
             logger.error(error);
+            return null;
+        }
+    });
+}
+exports.report = report;
+
+
+/***/ }),
+
+/***/ 377:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.report = exports.finish = exports.start = void 0;
+const logger = __importStar(__webpack_require__(4636));
+function generateTraceChartForSteps(job) {
+    let chartContent = '';
+    /**
+       gantt
+         title Build
+         dateFormat x
+         axisFormat %H:%M:%S
+         Set up job : milestone, 1658073446000, 1658073450000
+         Collect Workflow Telemetry : 1658073450000, 1658073450000
+         Run actions/checkout@v2 : 1658073451000, 1658073453000
+         Set up JDK 8 : 1658073453000, 1658073458000
+         Build with Maven : 1658073459000, 1658073654000
+         Run invalid command : crit, 1658073655000, 1658073654000
+         Archive test results : done, 1658073655000, 1658073654000
+         Post Set up JDK 8 : 1658073655000, 1658073654000
+         Post Run actions/checkout@v2 : 1658073655000, 1658073655000
+    */
+    chartContent = chartContent.concat('gantt', '\n');
+    chartContent = chartContent.concat('\t', `title ${job.name}`, '\n');
+    chartContent = chartContent.concat('\t', `dateFormat x`, '\n');
+    chartContent = chartContent.concat('\t', `axisFormat %H:%M:%S`, '\n');
+    for (const step of job.steps || []) {
+        if (!step.started_at || !step.completed_at) {
+            continue;
+        }
+        chartContent = chartContent.concat('\t', `${step.name} : `);
+        if (step.name === 'Set up job' && step.number === 1) {
+            chartContent = chartContent.concat('milestone, ');
+        }
+        if (step.conclusion === 'failure') {
+            // to show red
+            chartContent = chartContent.concat('crit, ');
+        }
+        else if (step.conclusion === 'skipped') {
+            // to show grey
+            chartContent = chartContent.concat('done, ');
+        }
+        const startTime = new Date(step.started_at).getTime();
+        const finishTime = new Date(step.completed_at).getTime();
+        chartContent = chartContent.concat(`${Math.min(startTime, finishTime)}, ${finishTime}`, '\n');
+    }
+    const postContentItems = [
+        '',
+        '### Step Trace',
+        '',
+        '```mermaid' + '\n' + chartContent + '\n' + '```'
+    ];
+    return postContentItems.join('\n');
+}
+///////////////////////////
+function start() {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Starting step tracer ...`);
+        try {
+            logger.info(`Started step tracer`);
+            return true;
+        }
+        catch (error) {
+            logger.error('Unable to start step tracer');
+            logger.error(error);
+            return false;
+        }
+    });
+}
+exports.start = start;
+function finish(currentJob) {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Finishing step tracer ...`);
+        try {
+            logger.info(`Finished step tracer`);
+            return true;
+        }
+        catch (error) {
+            logger.error('Unable to finish step tracer');
+            logger.error(error);
+            return false;
+        }
+    });
+}
+exports.finish = finish;
+function report(currentJob) {
+    return __awaiter(this, void 0, void 0, function* () {
+        logger.info(`Reporting step tracer result ...`);
+        if (!currentJob) {
+            return null;
+        }
+        try {
+            const postContent = generateTraceChartForSteps(currentJob);
+            logger.info(`Reported step tracer result`);
+            return postContent;
+        }
+        catch (error) {
+            logger.error('Unable to report step tracer result');
+            logger.error(error);
+            return null;
         }
     });
 }

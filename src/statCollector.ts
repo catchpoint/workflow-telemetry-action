@@ -1,38 +1,40 @@
-import { ChildProcess, spawn } from 'child_process';
-import path from 'path';
-import axios from 'axios';
-import * as core from '@actions/core';
-import { Octokit } from '@octokit/action';
-import * as github from '@actions/github';
+import { ChildProcess, spawn } from 'child_process'
+import path from 'path'
+import axios from 'axios'
+import * as core from '@actions/core'
 import {
-  CPUStats, DiskStats, GraphResponse,
-  JobInfo, LineGraphOptions,
-  MemoryStats, NetworkStats,
-  ProcessedCPUStats, ProcessedDiskStats,
+  CPUStats,
+  DiskStats,
+  GraphResponse,
+  LineGraphOptions,
+  MemoryStats,
+  NetworkStats,
+  ProcessedCPUStats,
+  ProcessedDiskStats,
   ProcessedMemoryStats,
   ProcessedNetworkStats,
-  ProcessedStats, StackedAreaGraphOptions
-} from './interfaces';
-import * as logger from './logger';
+  ProcessedStats,
+  StackedAreaGraphOptions,
+  WorkflowJobType
+} from './interfaces'
+import * as logger from './logger'
 
-const STAT_SERVER_PORT: number = 7777
-const PAGE_SIZE: number = 100
+const STAT_SERVER_PORT = 7777
 
-const BLACK: string = '#000000'
-const WHITE: string = '#FFFFFF'
-
-const { pull_request } = github.context.payload
-const { workflow, job, repo, runId, sha } = github.context
+const BLACK = '#000000'
+const WHITE = '#FFFFFF'
 
 async function triggerStatCollect(): Promise<void> {
   logger.debug('Triggering stat collect ...')
-  const response = await axios.post(`http://localhost:${STAT_SERVER_PORT}/collect`)
+  const response = await axios.post(
+    `http://localhost:${STAT_SERVER_PORT}/collect`
+  )
   if (logger.isDebugEnabled()) {
     logger.debug(`Triggered stat collect: ${JSON.stringify(response.data)}`)
   }
 }
 
-async function reportWorkflowMetrics(): Promise<void> {
+async function reportWorkflowMetrics(): Promise<string> {
   const theme: string = core.getInput('theme', { required: false })
   let axisColor = BLACK
   switch (theme) {
@@ -52,188 +54,139 @@ async function reportWorkflowMetrics(): Promise<void> {
   const { diskReadX, diskWriteX } = await getDiskStats()
 
   const cpuLoad =
-      userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
-          ? (await getStackedAreaGraph({
-            label: 'CPU Load (%)',
-            axisColor,
-            areas: [
-              {
-                label: 'User Load',
-                color: '#e41a1c99',
-                points: userLoadX
-              },
-              {
-                label: 'System Load',
-                color: '#ff7f0099',
-                points: systemLoadX
-              }
-            ]
-          }))
-          : null
+    userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
+      ? await getStackedAreaGraph({
+          label: 'CPU Load (%)',
+          axisColor,
+          areas: [
+            {
+              label: 'User Load',
+              color: '#e41a1c99',
+              points: userLoadX
+            },
+            {
+              label: 'System Load',
+              color: '#ff7f0099',
+              points: systemLoadX
+            }
+          ]
+        })
+      : null
 
   const memoryUsage =
-      activeMemoryX && activeMemoryX.length && availableMemoryX && availableMemoryX.length
-          ? (await getStackedAreaGraph({
-            label: 'Memory Usage (MB)',
-            axisColor,
-            areas: [
-              {
-                label: 'Used',
-                color: '#377eb899',
-                points: activeMemoryX
-              },
-              {
-                label: 'Free',
-                color: '#4daf4a99',
-                points: availableMemoryX
-              }
-            ]
-          }))
-          : null
+    activeMemoryX &&
+    activeMemoryX.length &&
+    availableMemoryX &&
+    availableMemoryX.length
+      ? await getStackedAreaGraph({
+          label: 'Memory Usage (MB)',
+          axisColor,
+          areas: [
+            {
+              label: 'Used',
+              color: '#377eb899',
+              points: activeMemoryX
+            },
+            {
+              label: 'Free',
+              color: '#4daf4a99',
+              points: availableMemoryX
+            }
+          ]
+        })
+      : null
 
   const networkIORead =
-      networkReadX && networkReadX.length
-          ? (await getLineGraph({
-            label: 'Network I/O Read (MB)',
-            axisColor,
-            line: {
-              label: 'Read',
-              color: '#be4d25',
-              points: networkReadX
-            }
-          }))
-          : null
+    networkReadX && networkReadX.length
+      ? await getLineGraph({
+          label: 'Network I/O Read (MB)',
+          axisColor,
+          line: {
+            label: 'Read',
+            color: '#be4d25',
+            points: networkReadX
+          }
+        })
+      : null
 
   const networkIOWrite =
-      networkWriteX && networkWriteX.length
-          ? (await getLineGraph({
-            label: 'Network I/O Write (MB)',
-            axisColor,
-            line: {
-              label: 'Write',
-              color: '#6c25be',
-              points: networkWriteX
-            }
-          }))
-          : null
+    networkWriteX && networkWriteX.length
+      ? await getLineGraph({
+          label: 'Network I/O Write (MB)',
+          axisColor,
+          line: {
+            label: 'Write',
+            color: '#6c25be',
+            points: networkWriteX
+          }
+        })
+      : null
 
   const diskIORead =
-      diskReadX && diskReadX.length
-          ? (await getLineGraph({
-            label: 'Disk I/O Read (MB)',
-            axisColor,
-            line: {
-              label: 'Read',
-              color: '#be4d25',
-              points: diskReadX
-            }
-          }))
-          : null
+    diskReadX && diskReadX.length
+      ? await getLineGraph({
+          label: 'Disk I/O Read (MB)',
+          axisColor,
+          line: {
+            label: 'Read',
+            color: '#be4d25',
+            points: diskReadX
+          }
+        })
+      : null
 
   const diskIOWrite =
-      diskWriteX && diskWriteX.length
-          ? (await getLineGraph({
-            label: 'Disk I/O Write (MB)',
-            axisColor,
-            line: {
-              label: 'Write',
-              color: '#6c25be',
-              points: diskWriteX
-            }
-          }))
-          : null
+    diskWriteX && diskWriteX.length
+      ? await getLineGraph({
+          label: 'Disk I/O Write (MB)',
+          axisColor,
+          line: {
+            label: 'Write',
+            color: '#6c25be',
+            points: diskWriteX
+          }
+        })
+      : null
 
-  const octokit: Octokit = new Octokit()
-
-  logger.debug(`Workflow - Job: ${workflow} - ${job}`)
-
-  let commit: string = (pull_request && pull_request.head && pull_request.head.sha) || sha
-  logger.debug(`Commit: ${commit}`)
-
-  const jobInfo: JobInfo = await getJobInfo(octokit)
-  logger.debug(`Job info: ${JSON.stringify(jobInfo)}`)
-
-  let title = `## Workflow Telemetry - ${workflow}`
-  if (jobInfo.name) {
-    title = `${title} / ${jobInfo.name}`
-  } else {
-    title = `${title} / ${job}`
-  }
-
-  const commitUrl = `https://github.com/${repo.owner}/${repo.repo}/commit/${commit}`
-  logger.debug(`Commit url: ${commitUrl}`)
-
-  let info = `Workflow telemetry for commit [${commit}](${commitUrl})`
-  if (jobInfo.id) {
-    const jobUrl = `https://github.com/${repo.owner}/${repo.repo}/runs/${jobInfo.id}?check_suite_focus=true`
-    logger.debug(`Job url: ${jobUrl}`)
-    info = `${info}\nYou can access workflow job details [here](${jobUrl})`
-  }
-
-  const postContentItems: string[] = [
-    title,
-    '',
-    info,
-    '',
-  ]
+  const postContentItems: string[] = []
   if (cpuLoad) {
     postContentItems.push(
-        '### CPU Metrics',
-        `![${cpuLoad.id}](${cpuLoad.url})`,
-        ''
+      '### CPU Metrics',
+      `![${cpuLoad.id}](${cpuLoad.url})`,
+      ''
     )
   }
   if (memoryUsage) {
     postContentItems.push(
-        '### Memory Metrics',
-        `![${memoryUsage.id}](${memoryUsage.url})`,
-        ''
+      '### Memory Metrics',
+      `![${memoryUsage.id}](${memoryUsage.url})`,
+      ''
     )
   }
   if ((networkIORead && networkIOWrite) || (diskIORead && diskIOWrite)) {
     postContentItems.push(
-        '### IO Metrics',
-        '|               | Read      | Write     |',
-        '|---            |---        |---        |'
+      '### IO Metrics',
+      '|               | Read      | Write     |',
+      '|---            |---        |---        |'
     )
   }
   if (networkIORead && networkIOWrite) {
     postContentItems.push(
-        `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`
+      `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`
     )
   }
   if (diskIORead && diskIOWrite) {
     postContentItems.push(
-        `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
+      `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
     )
   }
-  const postContent: string = postContentItems.join('\n')
 
-  const jobSummary: string = core.getInput('job_summary')
-  if ('true' === jobSummary) {
-    core.summary.addRaw(postContent)
-    await core.summary.write()
-  }
-
-  const commentOnPR: string = core.getInput('comment_on_pr')
-  if (pull_request && 'true' === commentOnPR) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`)
-    }
-
-    await octokit.rest.issues.createComment({
-      ...github.context.repo,
-      issue_number: Number(github.context.payload.pull_request?.number),
-      body: postContent
-    })
-  } else {
-    logger.debug(`Couldn't find Pull Request`)
-  }
+  return postContentItems.join('\n')
 }
 
 async function getCPUStats(): Promise<ProcessedCPUStats> {
-  let userLoadX: ProcessedStats[] = []
-  let systemLoadX: ProcessedStats[] = []
+  const userLoadX: ProcessedStats[] = []
+  const systemLoadX: ProcessedStats[] = []
 
   logger.debug('Getting CPU stats ...')
   const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/cpu`)
@@ -257,11 +210,13 @@ async function getCPUStats(): Promise<ProcessedCPUStats> {
 }
 
 async function getMemoryStats(): Promise<ProcessedMemoryStats> {
-  let activeMemoryX: ProcessedStats[] = []
-  let availableMemoryX: ProcessedStats[] = []
+  const activeMemoryX: ProcessedStats[] = []
+  const availableMemoryX: ProcessedStats[] = []
 
   logger.debug('Getting memory stats ...')
-  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/memory`)
+  const response = await axios.get(
+    `http://localhost:${STAT_SERVER_PORT}/memory`
+  )
   if (logger.isDebugEnabled()) {
     logger.debug(`Got memory stats: ${JSON.stringify(response.data)}`)
   }
@@ -282,11 +237,13 @@ async function getMemoryStats(): Promise<ProcessedMemoryStats> {
 }
 
 async function getNetworkStats(): Promise<ProcessedNetworkStats> {
-  let networkReadX: ProcessedStats[] = []
-  let networkWriteX: ProcessedStats[] = []
+  const networkReadX: ProcessedStats[] = []
+  const networkWriteX: ProcessedStats[] = []
 
   logger.debug('Getting network stats ...')
-  const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/network`)
+  const response = await axios.get(
+    `http://localhost:${STAT_SERVER_PORT}/network`
+  )
   if (logger.isDebugEnabled()) {
     logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
   }
@@ -307,8 +264,8 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
 }
 
 async function getDiskStats(): Promise<ProcessedDiskStats> {
-  let diskReadX: ProcessedStats[] = []
-  let diskWriteX: ProcessedStats[] = []
+  const diskReadX: ProcessedStats[] = []
+  const diskWriteX: ProcessedStats[] = []
 
   logger.debug('Getting disk stats ...')
   const response = await axios.get(`http://localhost:${STAT_SERVER_PORT}/disk`)
@@ -350,14 +307,16 @@ async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
   }
 
   const response = await axios.put(
-      'https://api.globadge.com/v1/chartgen/line/time',
-      payload
+    'https://api.globadge.com/v1/chartgen/line/time',
+    payload
   )
 
   return response.data
 }
 
-async function getStackedAreaGraph(options: StackedAreaGraphOptions): Promise<GraphResponse> {
+async function getStackedAreaGraph(
+  options: StackedAreaGraphOptions
+): Promise<GraphResponse> {
   const payload = {
     options: {
       width: 1000,
@@ -376,64 +335,20 @@ async function getStackedAreaGraph(options: StackedAreaGraphOptions): Promise<Gr
   }
 
   const response = await axios.put(
-      'https://api.globadge.com/v1/chartgen/stacked-area/time',
-      payload
+    'https://api.globadge.com/v1/chartgen/stacked-area/time',
+    payload
   )
 
   return response.data
 }
 
-async function getJobInfo(octokit: Octokit): Promise<JobInfo> {
-  const _getJobInfo = async (): Promise<JobInfo> => {
-    for (let page = 0; true; page++) {
-      const result = await octokit.rest.actions.listJobsForWorkflowRun({
-        owner: repo.owner,
-        repo: repo.repo,
-        run_id: runId,
-        per_page: PAGE_SIZE,
-        page
-      })
-      const jobs = result.data.jobs
-      // If there are no jobs, stop here
-      if (!jobs || !jobs.length) {
-        break
-      }
-      const currentJobs = jobs.filter(
-          it =>
-              it.status === 'in_progress' &&
-              it.runner_name === process.env.RUNNER_NAME
-      )
-      if (currentJobs && currentJobs.length) {
-        return {
-          id: currentJobs[0].id,
-          name: currentJobs[0].name
-        }
-      }
-      // Since returning job count is less than page size, this means that there are no other jobs.
-      // So no need to make another request for the next page.
-      if (jobs.length < PAGE_SIZE) {
-        break
-      }
-    }
-    return {}
-  }
-  for (let i = 0; i < 10; i++) {
-    const currentJobInfo = await _getJobInfo()
-    if (currentJobInfo && currentJobInfo.id) {
-      return currentJobInfo
-    }
-    await new Promise(r => setTimeout(r, 1000))
-  }
-  return {}
-}
-
 ///////////////////////////
 
-export async function start(): Promise<void> {
+export async function start(): Promise<boolean> {
   logger.info(`Starting stat collector ...`)
 
   try {
-    let statFrequency: number = 0
+    let statFrequency = 0
     const statFrequencyInput: string = core.getInput('stat_frequency')
     if (statFrequencyInput) {
       const statFrequencyVal: number = parseInt(statFrequencyInput)
@@ -443,27 +358,33 @@ export async function start(): Promise<void> {
     }
 
     const child: ChildProcess = spawn(
-        process.argv[0],
-        [path.join(__dirname, '../scw/index.js')],
-        {
-          detached: true,
-          stdio: 'ignore',
-          env: {
-            ...process.env,
-            WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency ? `${statFrequency}` : undefined
-          }
+      process.argv[0],
+      [path.join(__dirname, '../scw/index.js')],
+      {
+        detached: true,
+        stdio: 'ignore',
+        env: {
+          ...process.env,
+          WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency
+            ? `${statFrequency}`
+            : undefined
         }
+      }
     )
     child.unref()
 
     logger.info(`Started stat collector`)
+
+    return true
   } catch (error: any) {
     logger.error('Unable to start stat collector')
     logger.error(error)
+
+    return false
   }
 }
 
-export async function finish(): Promise<void> {
+export async function finish(currentJob: WorkflowJobType): Promise<boolean> {
   logger.info(`Finishing stat collector ...`)
 
   try {
@@ -471,21 +392,31 @@ export async function finish(): Promise<void> {
     await triggerStatCollect()
 
     logger.info(`Finished stat collector`)
+
+    return true
   } catch (error: any) {
     logger.error('Unable to finish stat collector')
     logger.error(error)
+
+    return false
   }
 }
 
-export async function report(): Promise<void> {
+export async function report(
+  currentJob: WorkflowJobType
+): Promise<string | null> {
   logger.info(`Reporting stat collector result ...`)
 
   try {
-    await reportWorkflowMetrics()
+    const postContent: string = await reportWorkflowMetrics()
 
     logger.info(`Reported stat collector result`)
+
+    return postContent
   } catch (error: any) {
     logger.error('Unable to report stat collector result')
     logger.error(error)
+
+    return null
   }
 }
