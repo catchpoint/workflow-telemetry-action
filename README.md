@@ -44,6 +44,8 @@ An example output of a simple workflow run will look like this.
 
 ![Metrics Example](/images/metrics-example.png)
 
+![Process Trace Example](/images/proc-trace-example.png)
+
 ## Usage
 
 To use the action, add the following step before the steps you want to track.
@@ -58,7 +60,7 @@ To use the action, add the following step before the steps you want to track.
 | Option                       | Requirement       | Description
 |------------------------------| ---               | ---
 | `github_token`               | Optional          | An alternative GitHub token, other than the default provided by GitHub Actions runner.
-| `metric_frequency`           | Optional          | Statistic collection frequency in seconds. Must be a number. Defaults to `5`.
+| `metric_frequency`           | Optional          | Metric collection frequency in seconds. Must be a number. Defaults to `5`.
 | `proc_trace_min_duration`    | Optional          | Puts minimum limit for process execution duration to be traced. Must be a number. Defaults to `-1` which means process duration filtering is not applied.
 | `proc_trace_sys_enable`      | Optional          | Enables tracing default system processes (`aws`, `cat`, `sed`, ...). Defaults to `false`.
 | `proc_trace_chart_show`      | Optional          | Enables showing traced processes in trace chart. Defaults to `true`.
