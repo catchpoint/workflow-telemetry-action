@@ -9,18 +9,28 @@ const SYS_PROCS_TO_BE_IGNORED: Set<string> = new Set([
   'cat',
   'cut',
   'date',
+  'echo',
+  'envsubst',
   'expr',
   'dirname',
   'grep',
   'head',
-  'ls',
-  'lsblk',
   'id',
   'ip',
+  'ln',
+  'ls',
+  'lsblk',
+  'mkdir',
+  'mktemp',
+  'mv',
   'ps',
+  'readlink',
+  'rm',
   'sed',
+  'seq',
   'sh',
-  'uname'
+  'uname',
+  'whoami'
 ])
 
 export async function parse(
@@ -41,12 +51,10 @@ export async function parse(
   // Note: we use the crlfDelay option to recognize all instances of CR LF
   // ('\r\n') in input file as a single line break.
 
-  let execCommandCount: number = 0
-  let exitCommandCount: number = 0
-  let unknownCommandCount: number = 0
   const activeCommands: Map<number, any> = new Map<number, any>()
   const replacedCommands: Map<number, any> = new Map<number, any>()
   const completedCommands: CompletedCommand[] = []
+  let commandOrder: number = 0
 
   for await (let line of rl) {
     line = line.trim()
@@ -54,10 +62,11 @@ export async function parse(
       continue
     }
     try {
-      const event = JSON.parse(line)
       if (logger.isDebugEnabled()) {
         logger.debug(`Parsing trace process event: ${line}`)
       }
+      const event = JSON.parse(line)
+      event.order = ++commandOrder
       if (!traceSystemProcesses && SYS_PROCS_TO_BE_IGNORED.has(event.name)) {
         continue
       }
@@ -67,7 +76,6 @@ export async function parse(
         if (existingCommand) {
           replacedCommands.set(event.pid, existingCommand)
         }
-        execCommandCount++
       } else if ('EXIT' === event.event) {
         let activeCommandCompleted: boolean = false
         let replacedCommandCompleted: boolean = false
@@ -111,13 +119,10 @@ export async function parse(
         if (activeCommandCompleted && activeCommand.duration > minDuration) {
           completedCommands.push(activeCommand)
         }
-
-        exitCommandCount++
       } else {
         if (logger.isDebugEnabled()) {
           logger.debug(`Unknown trace process event: ${line}`)
         }
-        unknownCommandCount++
       }
     } catch (error: any) {
       logger.debug(`Unable to parse process trace event (${error}): ${line}`)

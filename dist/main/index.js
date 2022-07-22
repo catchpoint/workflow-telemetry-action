@@ -23809,18 +23809,28 @@ const SYS_PROCS_TO_BE_IGNORED = new Set([
     'cat',
     'cut',
     'date',
+    'echo',
+    'envsubst',
     'expr',
     'dirname',
     'grep',
     'head',
-    'ls',
-    'lsblk',
     'id',
     'ip',
+    'ln',
+    'ls',
+    'lsblk',
+    'mkdir',
+    'mktemp',
+    'mv',
     'ps',
+    'readlink',
+    'rm',
     'sed',
+    'seq',
     'sh',
-    'uname'
+    'uname',
+    'whoami'
 ]);
 function parse(filePath, procEventParseOptions) {
     var e_1, _a;
@@ -23835,12 +23845,10 @@ function parse(filePath, procEventParseOptions) {
         });
         // Note: we use the crlfDelay option to recognize all instances of CR LF
         // ('\r\n') in input file as a single line break.
-        let execCommandCount = 0;
-        let exitCommandCount = 0;
-        let unknownCommandCount = 0;
         const activeCommands = new Map();
         const replacedCommands = new Map();
         const completedCommands = [];
+        let commandOrder = 0;
         try {
             for (var rl_1 = __asyncValues(rl), rl_1_1; rl_1_1 = yield rl_1.next(), !rl_1_1.done;) {
                 let line = rl_1_1.value;
@@ -23849,10 +23857,11 @@ function parse(filePath, procEventParseOptions) {
                     continue;
                 }
                 try {
-                    const event = JSON.parse(line);
                     if (logger.isDebugEnabled()) {
                         logger.debug(`Parsing trace process event: ${line}`);
                     }
+                    const event = JSON.parse(line);
+                    event.order = ++commandOrder;
                     if (!traceSystemProcesses && SYS_PROCS_TO_BE_IGNORED.has(event.name)) {
                         continue;
                     }
@@ -23862,7 +23871,6 @@ function parse(filePath, procEventParseOptions) {
                         if (existingCommand) {
                             replacedCommands.set(event.pid, existingCommand);
                         }
-                        execCommandCount++;
                     }
                     else if ('EXIT' === event.event) {
                         let activeCommandCompleted = false;
@@ -23900,13 +23908,11 @@ function parse(filePath, procEventParseOptions) {
                         if (activeCommandCompleted && activeCommand.duration > minDuration) {
                             completedCommands.push(activeCommand);
                         }
-                        exitCommandCount++;
                     }
                     else {
                         if (logger.isDebugEnabled()) {
                             logger.debug(`Unknown trace process event: ${line}`);
                         }
-                        unknownCommandCount++;
                     }
                 }
                 catch (error) {
@@ -23987,6 +23993,8 @@ const logger = __importStar(__webpack_require__(4636));
 const PROC_TRACER_PID_KEY = 'PROC_TRACER_PID';
 const PROC_TRACER_OUTPUT_FILE_NAME = 'proc-trace.out';
 const PROC_TRACER_BINARY_NAME_UBUNTU_20 = 'proc-tracer_ubuntu_20';
+const DEFAULT_PROC_TRACE_CHART_MAX_COUNT = 100;
+const GHA_FILE_NAME_PREFIX = '/home/runner/work/_actions/';
 let finished = false;
 function getProcessTracerBinaryName() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -24003,6 +24011,23 @@ function getProcessTracerBinaryName() {
         logger.info(`Process tracing disabled because of unsupported OS: ${JSON.stringify(osInfo)}`);
         return null;
     });
+}
+function getExtraProcessInfo(command) {
+    // Check whether this is node process with args
+    if (command.name === 'node' && command.args.length > 1) {
+        const arg1 = command.args[1];
+        // Check whether this is Node.js GHA process
+        if (arg1.startsWith(GHA_FILE_NAME_PREFIX)) {
+            const actionFile = arg1.substring(GHA_FILE_NAME_PREFIX.length);
+            const idx1 = actionFile.indexOf('/');
+            const idx2 = actionFile.indexOf('/', idx1 + 1);
+            if (idx1 >= 0 && idx2 > idx1) {
+                // If we could find a valid GHA name, use it as extra info
+                return actionFile.substring(idx1 + 1, idx2);
+            }
+        }
+    }
+    return null;
 }
 ///////////////////////////
 function start() {
@@ -24074,30 +24099,79 @@ function report(currentJob) {
         try {
             const procTraceOutFilePath = path_1.default.join(__dirname, '../proc-tracer', PROC_TRACER_OUTPUT_FILE_NAME);
             logger.info(`Getting process tracer result from file ${procTraceOutFilePath} ...`);
-            let minProcDuration = -1;
-            const minProcDurationInput = core.getInput('min_proc_duration');
-            if (minProcDurationInput) {
-                const minProcDurationVal = parseInt(minProcDurationInput);
+            let procTraceMinDuration = -1;
+            const procTraceMinDurationInput = core.getInput('proc_trace_min_duration');
+            if (procTraceMinDurationInput) {
+                const minProcDurationVal = parseInt(procTraceMinDurationInput);
                 if (Number.isInteger(minProcDurationVal)) {
-                    minProcDuration = minProcDurationVal;
+                    procTraceMinDuration = minProcDurationVal;
                 }
             }
-            const traceSysProcs = core.getInput('trace_sys_procs') === 'true';
+            const procTraceSysEnable = core.getInput('proc_trace_sys_enable') === 'true';
+            const procTraceChartShow = core.getInput('proc_trace_chart_show') === 'true';
+            const procTraceChartMaxCountInput = parseInt(core.getInput('proc_trace_chart_max_count'));
+            const procTraceChartMaxCount = Number.isInteger(procTraceChartMaxCountInput)
+                ? procTraceChartMaxCountInput
+                : DEFAULT_PROC_TRACE_CHART_MAX_COUNT;
+            const procTraceTableShow = core.getInput('proc_trace_table_show') === 'true';
             const completedCommands = yield (0, procTraceParser_1.parse)(procTraceOutFilePath, {
-                minDuration: minProcDuration,
-                traceSystemProcesses: traceSysProcs
+                minDuration: procTraceMinDuration,
+                traceSystemProcesses: procTraceSysEnable
             });
-            const commandInfos = [];
-            commandInfos.push((0, sprintf_js_1.sprintf)('%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s', 'TIME', 'NAME', 'UID', 'PID', 'PPID', 'START TIME', 'DURATION (ms)', 'EXIT CODE', 'FILE NAME + ARGS'));
-            for (const command of completedCommands) {
-                commandInfos.push((0, sprintf_js_1.sprintf)('%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s', command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
+            ///////////////////////////////////////////////////////////////////////////
+            let chartContent = '';
+            if (procTraceChartShow) {
+                chartContent = chartContent.concat('gantt', '\n');
+                chartContent = chartContent.concat('\t', `title ${currentJob.name}`, '\n');
+                chartContent = chartContent.concat('\t', `dateFormat x`, '\n');
+                chartContent = chartContent.concat('\t', `axisFormat %H:%M:%S`, '\n');
+                const filteredCommands = [...completedCommands]
+                    .sort((a, b) => {
+                    return -(a.duration - b.duration);
+                })
+                    .slice(0, procTraceChartMaxCount)
+                    .sort((a, b) => {
+                    let result = a.startTime - b.startTime;
+                    if (result === 0 && a.order && b.order) {
+                        result = a.order - b.order;
+                    }
+                    return result;
+                });
+                for (const command of filteredCommands) {
+                    const extraProcessInfo = getExtraProcessInfo(command);
+                    if (extraProcessInfo) {
+                        chartContent = chartContent.concat('\t', `${command.name} (${extraProcessInfo}) : `);
+                    }
+                    else {
+                        chartContent = chartContent.concat('\t', `${command.name} : `);
+                    }
+                    if (command.exitCode !== 0) {
+                        // to show red
+                        chartContent = chartContent.concat('crit, ');
+                    }
+                    const startTime = command.startTime;
+                    const finishTime = command.startTime + command.duration;
+                    chartContent = chartContent.concat(`${Math.min(startTime, finishTime)}, ${finishTime}`, '\n');
+                }
             }
-            const postContentItems = [
-                '',
-                '### Process Traces',
-                '',
-                '```' + '\n' + commandInfos.join('\n') + '\n' + '```'
-            ];
+            ///////////////////////////////////////////////////////////////////////////
+            let tableContent = '';
+            if (procTraceTableShow) {
+                const commandInfos = [];
+                commandInfos.push((0, sprintf_js_1.sprintf)('%-12s %-16s %7s %7s %7s %15s %15s %10s %-20s', 'TIME', 'NAME', 'UID', 'PID', 'PPID', 'START TIME', 'DURATION (ms)', 'EXIT CODE', 'FILE NAME + ARGS'));
+                for (const command of completedCommands) {
+                    commandInfos.push((0, sprintf_js_1.sprintf)('%-12s %-16s %7d %7d %7d %15d %15d %10d %s %s', command.ts, command.name, command.uid, command.pid, command.ppid, command.startTime, command.duration, command.exitCode, command.fileName, command.args.join(' ')));
+                }
+                tableContent = commandInfos.join('\n');
+            }
+            ///////////////////////////////////////////////////////////////////////////
+            const postContentItems = ['', '### Process Trace'];
+            if (procTraceChartShow) {
+                postContentItems.push('', `#### Top ${procTraceChartMaxCount} processes with highest duration`, '', '```mermaid' + '\n' + chartContent + '\n' + '```');
+            }
+            if (procTraceTableShow) {
+                postContentItems.push('', `#### All processes with detail`, '', '```' + '\n' + tableContent + '\n' + '```');
+            }
             const postContent = postContentItems.join('\n');
             logger.info(`Reported process tracer result`);
             return postContent;
@@ -24430,19 +24504,19 @@ function start() {
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Starting stat collector ...`);
         try {
-            let statFrequency = 0;
-            const statFrequencyInput = core.getInput('stat_frequency');
-            if (statFrequencyInput) {
-                const statFrequencyVal = parseInt(statFrequencyInput);
-                if (Number.isInteger(statFrequencyVal)) {
-                    statFrequency = statFrequencyVal * 1000;
+            let metricFrequency = 0;
+            const metricFrequencyInput = core.getInput('metric_frequency');
+            if (metricFrequencyInput) {
+                const metricFrequencyVal = parseInt(metricFrequencyInput);
+                if (Number.isInteger(metricFrequencyVal)) {
+                    metricFrequency = metricFrequencyVal * 1000;
                 }
             }
             const child = (0, child_process_1.spawn)(process.argv[0], [path_1.default.join(__dirname, '../scw/index.js')], {
                 detached: true,
                 stdio: 'ignore',
-                env: Object.assign(Object.assign({}, process.env), { WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency
-                        ? `${statFrequency}`
+                env: Object.assign(Object.assign({}, process.env), { WORKFLOW_TELEMETRY_STAT_FREQ: metricFrequency
+                        ? `${metricFrequency}`
                         : undefined })
             });
             child.unref();
