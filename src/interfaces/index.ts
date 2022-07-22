@@ -93,6 +93,7 @@ export interface CompletedCommand {
   readonly args: string[]
   readonly duration: number
   readonly exitCode: number
+  readonly order: number
 }
 
 export interface ProcEventParseOptions {

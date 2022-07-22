@@ -6,17 +6,29 @@ inputs:
     description: "GitHub API Access Token"
     default: ${{ github.token }}
     required: false
-  stat_frequency:
-    description: "Statistic collection frequency in seconds. Must be a number. Defaults to '5'."
+  metric_frequency:
+    description: "Metric collection frequency in seconds. Must be a number. Defaults to '5'."
     default: 5
     required: false
-  min_proc_duration:
+  proc_trace_min_duration:
     description: "Puts minimum limit for process execution duration to be traced. Must be a number. Defaults to '-1' which means process duration filtering is not applied."
     default: -1
     required: false
-  trace_sys_procs:
+  proc_trace_sys_enable:
     description: "Enables tracing default system processes ('aws', 'cat', 'sed', ...). Defaults to 'false'."
     default: 'false'
+    required: false
+  proc_trace_chart_show:
+    description: "Enables showing traced processes in trace chart. Defaults to 'true'."
+    default: 'true'
+    required: false
+  proc_trace_chart_max_count:
+    description: "Maximum number of processes to be shown in trace chart (applicable if `proc_trace_chart_show` input is `true`). Must be a number. Defaults to '100'."
+    default: 100
+    required: false
+  proc_trace_table_show:
+    description: "Enables showing traced processes in trace table. Defaults to 'true'."
+    default: 'true'
     required: false
   comment_on_pr:
     description: "Set to `true` to publish the results as comment to the PR (applicable if workflow run is triggered from PR). Defaults to 'true'."

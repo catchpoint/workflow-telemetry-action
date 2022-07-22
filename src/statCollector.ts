@@ -348,12 +348,12 @@ export async function start(): Promise<boolean> {
   logger.info(`Starting stat collector ...`)
 
   try {
-    let statFrequency = 0
-    const statFrequencyInput: string = core.getInput('stat_frequency')
-    if (statFrequencyInput) {
-      const statFrequencyVal: number = parseInt(statFrequencyInput)
-      if (Number.isInteger(statFrequencyVal)) {
-        statFrequency = statFrequencyVal * 1000
+    let metricFrequency = 0
+    const metricFrequencyInput: string = core.getInput('metric_frequency')
+    if (metricFrequencyInput) {
+      const metricFrequencyVal: number = parseInt(metricFrequencyInput)
+      if (Number.isInteger(metricFrequencyVal)) {
+        metricFrequency = metricFrequencyVal * 1000
       }
     }
 
@@ -365,8 +365,8 @@ export async function start(): Promise<boolean> {
         stdio: 'ignore',
         env: {
           ...process.env,
-          WORKFLOW_TELEMETRY_STAT_FREQ: statFrequency
-            ? `${statFrequency}`
+          WORKFLOW_TELEMETRY_STAT_FREQ: metricFrequency
+            ? `${metricFrequency}`
             : undefined
         }
       }
