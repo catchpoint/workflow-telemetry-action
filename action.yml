@@ -28,7 +28,7 @@ inputs:
     required: false
   proc_trace_table_show:
     description: "Enables showing traced processes in trace table. Defaults to 'true'."
-    default: 'true'
+    default: 'false'
     required: false
   comment_on_pr:
     description: "Set to `true` to publish the results as comment to the PR (applicable if workflow run is triggered from PR). Defaults to 'true'."
