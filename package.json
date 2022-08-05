@@ -1,6 +1,6 @@
 {
   "name": "workflow-telemetry-action",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": false,
   "description": "Github action to collect metrics (CPU, memory, I/O, etc ...) from your workflows to help you debug and optimize your CI/CD pipeline",
   "main": "lib/main.js",
