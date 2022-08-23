@@ -197,12 +197,12 @@ async function getCPUStats(): Promise<ProcessedCPUStats> {
   response.data.forEach((element: CPUStats) => {
     userLoadX.push({
       x: element.time,
-      y: element.userLoad
+      y: element.userLoad || 0
     })
 
     systemLoadX.push({
       x: element.time,
-      y: element.systemLoad
+      y: element.systemLoad || 0
     })
   })
 
@@ -224,12 +224,12 @@ async function getMemoryStats(): Promise<ProcessedMemoryStats> {
   response.data.forEach((element: MemoryStats) => {
     activeMemoryX.push({
       x: element.time,
-      y: element.activeMemoryMb
+      y: element.activeMemoryMb || 0
     })
 
     availableMemoryX.push({
       x: element.time,
-      y: element.availableMemoryMb
+      y: element.availableMemoryMb || 0
     })
   })
 
