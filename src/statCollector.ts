@@ -251,12 +251,12 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
   response.data.forEach((element: NetworkStats) => {
     networkReadX.push({
       x: element.time,
-      y: element.rxMb
-    })
+      y: element.rxMb || 0
+    }) 
 
     networkWriteX.push({
       x: element.time,
-      y: element.txMb
+      y: element.txMb || 0
     })
   })
 
@@ -276,12 +276,12 @@ async function getDiskStats(): Promise<ProcessedDiskStats> {
   response.data.forEach((element: DiskStats) => {
     diskReadX.push({
       x: element.time,
-      y: element.rxMb
+      y: element.rxMb || 0
     })
 
     diskWriteX.push({
       x: element.time,
-      y: element.wxMb
+      y: element.wxMb || 0
     })
   })
 
