@@ -247,26 +247,17 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
   if (logger.isDebugEnabled()) {
     logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
   }
-  const n = null;
-  // response.data.forEach((element: NetworkStats) => {
-  //   networkReadX.push({
-  //     x: element.time,
-  //     y: element.rxMb || 0
-  //   }) 
+  
+  response.data.forEach((element: NetworkStats) => {
+    networkReadX.push({
+      x: element.time,
+      y: element.rxMb || 0
+    }) 
 
-  //   networkWriteX.push({
-  //     x: element.time,
-  //     y: element.txMb || 0
-  //   })
-  // })
-  networkReadX.push({
-    x: 1661194043496,
-    y: n || 0
-  })
-
-  networkWriteX.push({
-    x: 1661194043497,
-    y: n || 0
+    networkWriteX.push({
+      x: element.time,
+      y: element.txMb || 0
+    })
   })
 
   return { networkReadX, networkWriteX }
