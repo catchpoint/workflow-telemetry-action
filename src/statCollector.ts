@@ -197,12 +197,12 @@ async function getCPUStats(): Promise<ProcessedCPUStats> {
   response.data.forEach((element: CPUStats) => {
     userLoadX.push({
       x: element.time,
-      y: element.userLoad
+      y: element.userLoad || 0
     })
 
     systemLoadX.push({
       x: element.time,
-      y: element.systemLoad
+      y: element.systemLoad || 0
     })
   })
 
@@ -224,12 +224,12 @@ async function getMemoryStats(): Promise<ProcessedMemoryStats> {
   response.data.forEach((element: MemoryStats) => {
     activeMemoryX.push({
       x: element.time,
-      y: element.activeMemoryMb
+      y: element.activeMemoryMb || 0
     })
 
     availableMemoryX.push({
       x: element.time,
-      y: element.availableMemoryMb
+      y: element.availableMemoryMb || 0
     })
   })
 
@@ -247,16 +247,16 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
   if (logger.isDebugEnabled()) {
     logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
   }
-
+  
   response.data.forEach((element: NetworkStats) => {
     networkReadX.push({
       x: element.time,
-      y: element.rxMb
-    })
+      y: element.rxMb || 0
+    }) 
 
     networkWriteX.push({
       x: element.time,
-      y: element.txMb
+      y: element.txMb || 0
     })
   })
 
@@ -276,12 +276,12 @@ async function getDiskStats(): Promise<ProcessedDiskStats> {
   response.data.forEach((element: DiskStats) => {
     diskReadX.push({
       x: element.time,
-      y: element.rxMb
+      y: element.rxMb || 0
     })
 
     diskWriteX.push({
       x: element.time,
-      y: element.wxMb
+      y: element.wxMb || 0
     })
   })
 
