@@ -24379,11 +24379,11 @@ function getCPUStats() {
         response.data.forEach((element) => {
             userLoadX.push({
                 x: element.time,
-                y: element.userLoad
+                y: element.userLoad || 0
             });
             systemLoadX.push({
                 x: element.time,
-                y: element.systemLoad
+                y: element.systemLoad || 0
             });
         });
         return { userLoadX, systemLoadX };
@@ -24401,11 +24401,11 @@ function getMemoryStats() {
         response.data.forEach((element) => {
             activeMemoryX.push({
                 x: element.time,
-                y: element.activeMemoryMb
+                y: element.activeMemoryMb || 0
             });
             availableMemoryX.push({
                 x: element.time,
-                y: element.availableMemoryMb
+                y: element.availableMemoryMb || 0
             });
         });
         return { activeMemoryX, availableMemoryX };
@@ -24423,11 +24423,11 @@ function getNetworkStats() {
         response.data.forEach((element) => {
             networkReadX.push({
                 x: element.time,
-                y: element.rxMb
+                y: element.rxMb || 0
             });
             networkWriteX.push({
                 x: element.time,
-                y: element.txMb
+                y: element.txMb || 0
             });
         });
         return { networkReadX, networkWriteX };
@@ -24445,11 +24445,11 @@ function getDiskStats() {
         response.data.forEach((element) => {
             diskReadX.push({
                 x: element.time,
-                y: element.rxMb
+                y: element.rxMb || 0
             });
             diskWriteX.push({
                 x: element.time,
-                y: element.wxMb
+                y: element.wxMb || 0
             });
         });
         return { diskReadX, diskWriteX };
