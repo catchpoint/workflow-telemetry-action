@@ -197,12 +197,12 @@ async function getCPUStats(): Promise<ProcessedCPUStats> {
   response.data.forEach((element: CPUStats) => {
     userLoadX.push({
       x: element.time,
-      y: element.userLoad || 0
+      y: element.userLoad && element.userLoad > 0 ? element.userLoad : 0
     })
 
     systemLoadX.push({
       x: element.time,
-      y: element.systemLoad || 0
+      y: element.systemLoad && element.systemLoad > 0 ? element.systemLoad : 0
     })
   })
 
@@ -224,12 +224,12 @@ async function getMemoryStats(): Promise<ProcessedMemoryStats> {
   response.data.forEach((element: MemoryStats) => {
     activeMemoryX.push({
       x: element.time,
-      y: element.activeMemoryMb || 0
+      y: element.activeMemoryMb && element.activeMemoryMb > 0 ? element.activeMemoryMb : 0
     })
 
     availableMemoryX.push({
       x: element.time,
-      y: element.availableMemoryMb || 0
+      y: element.availableMemoryMb && element.availableMemoryMb > 0 ? element.availableMemoryMb : 0
     })
   })
 
@@ -251,12 +251,12 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
   response.data.forEach((element: NetworkStats) => {
     networkReadX.push({
       x: element.time,
-      y: element.rxMb || 0
+      y: element.rxMb && element.rxMb > 0 ? element.rxMb : 0
     }) 
 
     networkWriteX.push({
       x: element.time,
-      y: element.txMb || 0
+      y: element.txMb && element.txMb > 0 ? element.txMb : 0
     })
   })
 
@@ -276,12 +276,12 @@ async function getDiskStats(): Promise<ProcessedDiskStats> {
   response.data.forEach((element: DiskStats) => {
     diskReadX.push({
       x: element.time,
-      y: element.rxMb || 0
+      y: element.rxMb && element.rxMb > 0 ? element.rxMb : 0
     })
 
     diskWriteX.push({
       x: element.time,
-      y: element.wxMb || 0
+      y: element.wxMb && element.wxMb > 0 ? element.wxMb : 0
     })
   })
 
@@ -306,12 +306,19 @@ async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
     lines: [options.line]
   }
 
-  const response = await axios.put(
-    'https://api.globadge.com/v1/chartgen/line/time',
-    payload
-  )
+  let response = null;
+  try {  
+    response = await axios.put(
+      'https://api.globadge.com/v1/chartgen/line/time',
+      payload
+    )
+  } catch (error: any) {
+    logger.error(error);
+    logger.error(`getLineGraph ${JSON.stringify(payload)}`);
+  }
 
-  return response.data
+
+  return response?.data
 }
 
 async function getStackedAreaGraph(
@@ -334,12 +341,17 @@ async function getStackedAreaGraph(
     areas: options.areas
   }
 
-  const response = await axios.put(
-    'https://api.globadge.com/v1/chartgen/stacked-area/time',
-    payload
-  )
-
-  return response.data
+  let response = null;
+  try {
+    response = await axios.put(
+      'https://api.globadge.com/v1/chartgen/stacked-area/time',
+      payload
+    )
+  } catch (error: any) {
+    logger.error(error);
+    logger.error(`getStackedAreaGraph ${JSON.stringify(payload)}`);
+  }
+  return response?.data
 }
 
 ///////////////////////////

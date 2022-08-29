@@ -80796,11 +80796,11 @@ function getCPUStats() {
         response.data.forEach((element) => {
             userLoadX.push({
                 x: element.time,
-                y: element.userLoad || 0
+                y: element.userLoad && element.userLoad > 0 ? element.userLoad : 0
             });
             systemLoadX.push({
                 x: element.time,
-                y: element.systemLoad || 0
+                y: element.systemLoad && element.systemLoad > 0 ? element.systemLoad : 0
             });
         });
         return { userLoadX, systemLoadX };
@@ -80818,11 +80818,11 @@ function getMemoryStats() {
         response.data.forEach((element) => {
             activeMemoryX.push({
                 x: element.time,
-                y: element.activeMemoryMb || 0
+                y: element.activeMemoryMb && element.activeMemoryMb > 0 ? element.activeMemoryMb : 0
             });
             availableMemoryX.push({
                 x: element.time,
-                y: element.availableMemoryMb || 0
+                y: element.availableMemoryMb && element.availableMemoryMb > 0 ? element.availableMemoryMb : 0
             });
         });
         return { activeMemoryX, availableMemoryX };
@@ -80840,11 +80840,11 @@ function getNetworkStats() {
         response.data.forEach((element) => {
             networkReadX.push({
                 x: element.time,
-                y: element.rxMb || 0
+                y: element.rxMb && element.rxMb > 0 ? element.rxMb : 0
             });
             networkWriteX.push({
                 x: element.time,
-                y: element.txMb || 0
+                y: element.txMb && element.txMb > 0 ? element.txMb : 0
             });
         });
         return { networkReadX, networkWriteX };
@@ -80862,11 +80862,11 @@ function getDiskStats() {
         response.data.forEach((element) => {
             diskReadX.push({
                 x: element.time,
-                y: element.rxMb || 0
+                y: element.rxMb && element.rxMb > 0 ? element.rxMb : 0
             });
             diskWriteX.push({
                 x: element.time,
-                y: element.wxMb || 0
+                y: element.wxMb && element.wxMb > 0 ? element.wxMb : 0
             });
         });
         return { diskReadX, diskWriteX };
@@ -80890,8 +80890,15 @@ function getLineGraph(options) {
             },
             lines: [options.line]
         };
-        const response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/line/time', payload);
-        return response.data;
+        let response = null;
+        try {
+            response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/line/time', payload);
+        }
+        catch (error) {
+            logger.error(error);
+            logger.error(`getLineGraph ${JSON.stringify(payload)}`);
+        }
+        return response === null || response === void 0 ? void 0 : response.data;
     });
 }
 function getStackedAreaGraph(options) {
@@ -80912,8 +80919,15 @@ function getStackedAreaGraph(options) {
             },
             areas: options.areas
         };
-        const response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/stacked-area/time', payload);
-        return response.data;
+        let response = null;
+        try {
+            response = yield axios_1.default.put('https://api.globadge.com/v1/chartgen/stacked-area/time', payload);
+        }
+        catch (error) {
+            logger.error(error);
+            logger.error(`getStackedAreaGraph ${JSON.stringify(payload)}`);
+        }
+        return response === null || response === void 0 ? void 0 : response.data;
     });
 }
 ///////////////////////////
