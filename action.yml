@@ -4,7 +4,6 @@ author: "Serkan Özal <serkan@thundra.io>"
 inputs:
   github_token:
     description: "GitHub API Access Token"
-    default: ${{ github.token }}
     required: false
   metric_frequency:
     description: "Metric collection frequency in seconds. Must be a number. Defaults to '5'."
