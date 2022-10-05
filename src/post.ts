@@ -152,7 +152,7 @@ async function run(): Promise<void> {
     logger.info(`Finish completed`)
   } catch (error: any) {
     logger.error(error.message)
-    core.notice(error.message)
+    core.warning(error.message)
   }
 }
 

@@ -80198,7 +80198,7 @@ function run() {
         }
         catch (error) {
             logger.error(error.message);
-            core.notice(error.message);
+            core.warning(error.message);
         }
     });
 }
