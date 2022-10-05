@@ -18,7 +18,7 @@ async function run(): Promise<void> {
     logger.info(`Initialization completed`)
   } catch (error: any) {
     logger.error(error.message)
-    core.notice(error.message);
+    core.notice(error.message)
   }
 }
 
