@@ -23762,7 +23762,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__webpack_require__(2186));
 const stepTracer = __importStar(__webpack_require__(377));
 const statCollector = __importStar(__webpack_require__(6451));
 const processTracer = __importStar(__webpack_require__(6160));
@@ -23781,7 +23780,6 @@ function run() {
         }
         catch (error) {
             logger.error(error.message);
-            core.notice(error.message);
         }
     });
 }

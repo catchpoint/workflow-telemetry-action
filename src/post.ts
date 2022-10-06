@@ -151,8 +151,8 @@ async function run(): Promise<void> {
 
     logger.info(`Finish completed`)
   } catch (error: any) {
+    logger.info(`Please sure that your workflow have actions:read permission!`)
     logger.error(error.message)
-    core.warning(error.message)
   }
 }
 
