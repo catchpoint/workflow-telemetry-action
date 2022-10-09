@@ -43,12 +43,19 @@ async function getCurrentJob(): Promise<WorkflowJobType | null> {
     }
     return null
   }
-  for (let i = 0; i < 10; i++) {
-    const currentJob: WorkflowJobType | null = await _getCurrentJob()
-    if (currentJob && currentJob.id) {
-      return currentJob
+  try {
+    for (let i = 0; i < 10; i++) {
+      const currentJob: WorkflowJobType | null = await _getCurrentJob()
+      if (currentJob && currentJob.id) {
+        return currentJob
+      }
+      await new Promise(r => setTimeout(r, 1000))
     }
-    await new Promise(r => setTimeout(r, 1000))
+  } catch (error: any) {
+    logger.error(
+      `Unable to get current workflow job info. ` +
+        `Please sure that your workflow have "actions:read" permission!`
+    )
   }
   return null
 }
@@ -111,7 +118,9 @@ async function run(): Promise<void> {
     const currentJob: WorkflowJobType | null = await getCurrentJob()
 
     if (!currentJob) {
-      logger.error("Couldn't find current job")
+      logger.error(
+        `Couldn't find current job. So action will not report any data.`
+      )
       return
     }
 
@@ -151,7 +160,6 @@ async function run(): Promise<void> {
 
     logger.info(`Finish completed`)
   } catch (error: any) {
-    logger.info(`Please sure that your workflow have actions:read permission!`)
     logger.error(error.message)
   }
 }
