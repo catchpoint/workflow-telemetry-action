@@ -23727,7 +23727,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__webpack_require__(2186));
 const stepTracer = __importStar(__webpack_require__(377));
 const statCollector = __importStar(__webpack_require__(6451));
 const processTracer = __importStar(__webpack_require__(6160));
@@ -23745,7 +23744,7 @@ function run() {
             logger.info(`Initialization completed`);
         }
         catch (error) {
-            core.setFailed(error.message);
+            logger.error(error.message);
         }
     });
 }
@@ -24401,11 +24400,15 @@ function getMemoryStats() {
         response.data.forEach((element) => {
             activeMemoryX.push({
                 x: element.time,
-                y: element.activeMemoryMb && element.activeMemoryMb > 0 ? element.activeMemoryMb : 0
+                y: element.activeMemoryMb && element.activeMemoryMb > 0
+                    ? element.activeMemoryMb
+                    : 0
             });
             availableMemoryX.push({
                 x: element.time,
-                y: element.availableMemoryMb && element.availableMemoryMb > 0 ? element.availableMemoryMb : 0
+                y: element.availableMemoryMb && element.availableMemoryMb > 0
+                    ? element.availableMemoryMb
+                    : 0
             });
         });
         return { activeMemoryX, availableMemoryX };

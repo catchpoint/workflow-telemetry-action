@@ -80082,12 +80082,18 @@ function getCurrentJob() {
             }
             return null;
         });
-        for (let i = 0; i < 10; i++) {
-            const currentJob = yield _getCurrentJob();
-            if (currentJob && currentJob.id) {
-                return currentJob;
+        try {
+            for (let i = 0; i < 10; i++) {
+                const currentJob = yield _getCurrentJob();
+                if (currentJob && currentJob.id) {
+                    return currentJob;
+                }
+                yield new Promise(r => setTimeout(r, 1000));
             }
-            yield new Promise(r => setTimeout(r, 1000));
+        }
+        catch (error) {
+            logger.error(`Unable to get current workflow job info. ` +
+                `Please sure that your workflow have "actions:read" permission!`);
         }
         return null;
     });
@@ -80132,7 +80138,7 @@ function run() {
             logger.info(`Finishing ...`);
             const currentJob = yield getCurrentJob();
             if (!currentJob) {
-                logger.error("Couldn't find current job");
+                logger.error(`Couldn't find current job. So action will not report any data.`);
                 return;
             }
             logger.debug(`Current job: ${JSON.stringify(currentJob)}`);
@@ -80162,7 +80168,7 @@ function run() {
             logger.info(`Finish completed`);
         }
         catch (error) {
-            core.setFailed(error.message);
+            logger.error(error.message);
         }
     });
 }
@@ -80818,11 +80824,15 @@ function getMemoryStats() {
         response.data.forEach((element) => {
             activeMemoryX.push({
                 x: element.time,
-                y: element.activeMemoryMb && element.activeMemoryMb > 0 ? element.activeMemoryMb : 0
+                y: element.activeMemoryMb && element.activeMemoryMb > 0
+                    ? element.activeMemoryMb
+                    : 0
             });
             availableMemoryX.push({
                 x: element.time,
-                y: element.availableMemoryMb && element.availableMemoryMb > 0 ? element.availableMemoryMb : 0
+                y: element.availableMemoryMb && element.availableMemoryMb > 0
+                    ? element.availableMemoryMb
+                    : 0
             });
         });
         return { activeMemoryX, availableMemoryX };

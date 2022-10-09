@@ -8321,11 +8321,15 @@ function getMemoryStats() {
         response.data.forEach((element) => {
             activeMemoryX.push({
                 x: element.time,
-                y: element.activeMemoryMb && element.activeMemoryMb > 0 ? element.activeMemoryMb : 0
+                y: element.activeMemoryMb && element.activeMemoryMb > 0
+                    ? element.activeMemoryMb
+                    : 0
             });
             availableMemoryX.push({
                 x: element.time,
-                y: element.availableMemoryMb && element.availableMemoryMb > 0 ? element.availableMemoryMb : 0
+                y: element.availableMemoryMb && element.availableMemoryMb > 0
+                    ? element.availableMemoryMb
+                    : 0
             });
         });
         return { activeMemoryX, availableMemoryX };
