@@ -1,0 +1,24 @@
+name: Tag v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag name"
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.tag }}
+      - name: Configure Git User
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+      - name: Tag ${{ github.event.inputs.tag }} as v1
+        run: |
+          git tag v1 -f
+          git push origin --tags -f
