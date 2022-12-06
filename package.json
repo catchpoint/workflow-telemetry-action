@@ -38,7 +38,8 @@
     "@octokit/action": "^4.0.9",
     "@octokit/openapi-types": "^14.0.0",
     "axios": "^1.1.2",
-    "systeminformation": "^5.11.15"
+    "systeminformation": "^5.11.15",
+    "sprintf-js": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^16.3.3",
