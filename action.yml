@@ -15,11 +15,11 @@ inputs:
     required: false
   proc_trace_sys_enable:
     description: "Enables tracing default system processes ('aws', 'cat', 'sed', ...). Defaults to 'false'."
-    default: 'false'
+    default: "false"
     required: false
   proc_trace_chart_show:
     description: "Enables showing traced processes in trace chart. Defaults to 'true'."
-    default: 'true'
+    default: "true"
     required: false
   proc_trace_chart_max_count:
     description: "Maximum number of processes to be shown in trace chart (applicable if `proc_trace_chart_show` input is `true`). Must be a number. Defaults to '100'."
@@ -27,23 +27,23 @@ inputs:
     required: false
   proc_trace_table_show:
     description: "Enables showing traced processes in trace table. Defaults to 'false'."
-    default: 'false'
+    default: "false"
     required: false
   comment_on_pr:
     description: "Set to `true` to publish the results as comment to the PR (applicable if workflow run is triggered from PR). Defaults to 'true'."
-    default: 'true'
+    default: "true"
     required: false
   job_summary:
     description: "Set to `true` to publish the results as part of the job summary page of the workflow run. Defaults to 'true'."
-    default: 'true'
+    default: "true"
     required: false
   theme:
     description: "Set to `dark` to generate charts compatible with Github dark mode. Defaults to 'light'."
-    default: 'light'
+    default: "light"
     required: false
 
 runs:
-  using: "node12"
+  using: "node16"
   main: dist/main/index.js
   post: dist/post/index.js
 branding:
