@@ -224,12 +224,18 @@ async function getMemoryStats(): Promise<ProcessedMemoryStats> {
   response.data.forEach((element: MemoryStats) => {
     activeMemoryX.push({
       x: element.time,
-      y: element.activeMemoryMb && element.activeMemoryMb > 0 ? element.activeMemoryMb : 0
+      y:
+        element.activeMemoryMb && element.activeMemoryMb > 0
+          ? element.activeMemoryMb
+          : 0
     })
 
     availableMemoryX.push({
       x: element.time,
-      y: element.availableMemoryMb && element.availableMemoryMb > 0 ? element.availableMemoryMb : 0
+      y:
+        element.availableMemoryMb && element.availableMemoryMb > 0
+          ? element.availableMemoryMb
+          : 0
     })
   })
 
@@ -247,12 +253,12 @@ async function getNetworkStats(): Promise<ProcessedNetworkStats> {
   if (logger.isDebugEnabled()) {
     logger.debug(`Got network stats: ${JSON.stringify(response.data)}`)
   }
-  
+
   response.data.forEach((element: NetworkStats) => {
     networkReadX.push({
       x: element.time,
       y: element.rxMb && element.rxMb > 0 ? element.rxMb : 0
-    }) 
+    })
 
     networkWriteX.push({
       x: element.time,
@@ -306,17 +312,16 @@ async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
     lines: [options.line]
   }
 
-  let response = null;
-  try {  
+  let response = null
+  try {
     response = await axios.put(
       'https://api.globadge.com/v1/chartgen/line/time',
       payload
     )
   } catch (error: any) {
-    logger.error(error);
-    logger.error(`getLineGraph ${JSON.stringify(payload)}`);
+    logger.error(error)
+    logger.error(`getLineGraph ${JSON.stringify(payload)}`)
   }
-
 
   return response?.data
 }
@@ -341,15 +346,15 @@ async function getStackedAreaGraph(
     areas: options.areas
   }
 
-  let response = null;
+  let response = null
   try {
     response = await axios.put(
       'https://api.globadge.com/v1/chartgen/stacked-area/time',
       payload
     )
   } catch (error: any) {
-    logger.error(error);
-    logger.error(`getStackedAreaGraph ${JSON.stringify(payload)}`);
+    logger.error(error)
+    logger.error(`getStackedAreaGraph ${JSON.stringify(payload)}`)
   }
   return response?.data
 }
