@@ -52,7 +52,7 @@ To use the action, add the following step before the steps you want to track.
 
 ```yaml
 - name: Collect Workflow Telemetry
-  uses: runforesight/workflow-telemetry-action@v1
+  uses: runforesight/workflow-telemetry-action@v2
 ```
 
 ## Configuration
