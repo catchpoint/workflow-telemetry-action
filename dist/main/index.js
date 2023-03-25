@@ -22308,7 +22308,7 @@ function generateTraceChartForSteps(job) {
         if (!step.started_at || !step.completed_at) {
             continue;
         }
-        chartContent = chartContent.concat('\t', `${step.name} : `);
+        chartContent = chartContent.concat('\t', `${step.name.replace(':', '-')} : `);
         if (step.name === 'Set up job' && step.number === 1) {
             chartContent = chartContent.concat('milestone, ');
         }
