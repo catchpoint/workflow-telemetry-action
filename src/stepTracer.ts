@@ -31,7 +31,7 @@ function generateTraceChartForSteps(job: WorkflowJobType): string {
     }
     chartContent = chartContent.concat(
       '\t',
-      `${step.name.replace(':', '-')} : `
+      `${step.name.replace(/:/g, '-')} : `
     )
 
     if (step.name === 'Set up job' && step.number === 1) {
