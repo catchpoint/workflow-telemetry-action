@@ -9,7 +9,8 @@ import * as logger from './logger'
 
 const PROC_TRACER_PID_KEY = 'PROC_TRACER_PID'
 const PROC_TRACER_OUTPUT_FILE_NAME = 'proc-trace.out'
-const PROC_TRACER_BINARY_NAME_UBUNTU_20 = 'proc-tracer_ubuntu_20'
+const PROC_TRACER_BINARY_NAME_UBUNTU_20: string = 'proc_tracer_ubuntu-20'
+const PROC_TRACER_BINARY_NAME_UBUNTU_22: string = 'proc_tracer_ubuntu-22'
 const DEFAULT_PROC_TRACE_CHART_MAX_COUNT = 100
 const GHA_FILE_NAME_PREFIX = '/home/runner/work/_actions/'
 
@@ -22,7 +23,13 @@ async function getProcessTracerBinaryName(): Promise<string | null> {
     if (osInfo.distro === 'Ubuntu') {
       const majorVersion: number = parseInt(osInfo.release.split('.')[0])
       if (majorVersion === 20) {
+        logger.info(`Using ${PROC_TRACER_BINARY_NAME_UBUNTU_20}`)
         return PROC_TRACER_BINARY_NAME_UBUNTU_20
+      }
+
+      if (majorVersion === 22) {
+        logger.info(`Using ${PROC_TRACER_BINARY_NAME_UBUNTU_22}`)
+        return PROC_TRACER_BINARY_NAME_UBUNTU_22
       }
     }
   }

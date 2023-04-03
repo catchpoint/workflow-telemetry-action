@@ -31414,7 +31414,8 @@ const procTraceParser_1 = __webpack_require__(9576);
 const logger = __importStar(__webpack_require__(4636));
 const PROC_TRACER_PID_KEY = 'PROC_TRACER_PID';
 const PROC_TRACER_OUTPUT_FILE_NAME = 'proc-trace.out';
-const PROC_TRACER_BINARY_NAME_UBUNTU_20 = 'proc-tracer_ubuntu_20';
+const PROC_TRACER_BINARY_NAME_UBUNTU_20 = 'proc_tracer_ubuntu-20';
+const PROC_TRACER_BINARY_NAME_UBUNTU_22 = 'proc_tracer_ubuntu-22';
 const DEFAULT_PROC_TRACE_CHART_MAX_COUNT = 100;
 const GHA_FILE_NAME_PREFIX = '/home/runner/work/_actions/';
 let finished = false;
@@ -31426,7 +31427,12 @@ function getProcessTracerBinaryName() {
             if (osInfo.distro === 'Ubuntu') {
                 const majorVersion = parseInt(osInfo.release.split('.')[0]);
                 if (majorVersion === 20) {
+                    logger.info(`Using ${PROC_TRACER_BINARY_NAME_UBUNTU_20}`);
                     return PROC_TRACER_BINARY_NAME_UBUNTU_20;
+                }
+                if (majorVersion === 22) {
+                    logger.info(`Using ${PROC_TRACER_BINARY_NAME_UBUNTU_22}`);
+                    return PROC_TRACER_BINARY_NAME_UBUNTU_22;
                 }
             }
         }
