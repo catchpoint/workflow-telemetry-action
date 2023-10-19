@@ -4,12 +4,14 @@ import axios from 'axios'
 import * as core from '@actions/core'
 import {
   CPUStats,
+  DiskSizeStats,
   DiskStats,
   GraphResponse,
   LineGraphOptions,
   MemoryStats,
   NetworkStats,
   ProcessedCPUStats,
+  ProcessedDiskSizeStats,
   ProcessedDiskStats,
   ProcessedMemoryStats,
   ProcessedNetworkStats,
@@ -18,6 +20,7 @@ import {
   WorkflowJobType
 } from './interfaces'
 import * as logger from './logger'
+import { log } from 'console'
 
 const STAT_SERVER_PORT = 7777
 
@@ -52,6 +55,7 @@ async function reportWorkflowMetrics(): Promise<string> {
   const { activeMemoryX, availableMemoryX } = await getMemoryStats()
   const { networkReadX, networkWriteX } = await getNetworkStats()
   const { diskReadX, diskWriteX } = await getDiskStats()
+  const { diskAvailableX, diskUsedX } = await getDiskSizeStats()
 
   const cpuLoad =
     userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
@@ -148,6 +152,26 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
+  const diskSizeUsage =
+    diskUsedX && diskUsedX.length && diskAvailableX && diskAvailableX.length
+      ? await getStackedAreaGraph({
+          label: 'Disk Usage (MB)',
+          axisColor,
+          areas: [
+            {
+              label: 'Used',
+              color: '#377eb899',
+              points: diskUsedX
+            },
+            {
+              label: 'Free',
+              color: '#4daf4a99',
+              points: diskAvailableX
+            }
+          ]
+        })
+      : null
+
   const postContentItems: string[] = []
   if (cpuLoad) {
     postContentItems.push(
@@ -178,6 +202,13 @@ async function reportWorkflowMetrics(): Promise<string> {
   if (diskIORead && diskIOWrite) {
     postContentItems.push(
       `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
+    )
+  }
+  if (diskSizeUsage) {
+    postContentItems.push(
+      '### Disk Size Metrics',
+      `![${diskSizeUsage.id}](${diskSizeUsage.url})`,
+      ''
     )
   }
 
@@ -292,6 +323,36 @@ async function getDiskStats(): Promise<ProcessedDiskStats> {
   })
 
   return { diskReadX, diskWriteX }
+}
+
+async function getDiskSizeStats(): Promise<ProcessedDiskSizeStats> {
+  const diskAvailableX: ProcessedStats[] = []
+  const diskUsedX: ProcessedStats[] = []
+
+  logger.debug('Getting disk size stats ...')
+  const response = await axios.get(
+    `http://localhost:${STAT_SERVER_PORT}/disk_size`
+  )
+  if (logger.isDebugEnabled()) {
+    logger.debug(`Got disk size stats: ${JSON.stringify(response.data)}`)
+  }
+
+  response.data.forEach((element: DiskSizeStats) => {
+    diskAvailableX.push({
+      x: element.time,
+      y:
+        element.availableSizeMb && element.availableSizeMb > 0
+          ? element.availableSizeMb
+          : 0
+    })
+
+    diskUsedX.push({
+      x: element.time,
+      y: element.usedSizeMb && element.usedSizeMb > 0 ? element.usedSizeMb : 0
+    })
+  })
+
+  return { diskAvailableX, diskUsedX }
 }
 
 async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {

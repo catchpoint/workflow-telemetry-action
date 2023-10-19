@@ -1,7 +1,13 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http'
 import si from 'systeminformation'
 import * as logger from './logger'
-import { CPUStats, MemoryStats, DiskStats, NetworkStats } from './interfaces'
+import {
+  CPUStats,
+  MemoryStats,
+  DiskStats,
+  NetworkStats,
+  DiskSizeStats
+} from './interfaces'
 
 const STATS_FREQ: number =
   parseInt(process.env.WORKFLOW_TELEMETRY_STAT_FREQ || '') || 5000
@@ -126,6 +132,33 @@ function collectDiskStats(
     })
 }
 
+const diskSizeStatsHistogram: DiskSizeStats[] = []
+
+function collectDiskSizeStats(
+  statTime: number,
+  timeInterval: number
+): Promise<any> {
+  return si
+    .fsSize()
+    .then((data: si.Systeminformation.FsSizeData[]) => {
+      let totalSize = 0,
+        usedSize = 0
+      for (let fsd of data) {
+        totalSize += fsd.size
+        usedSize += fsd.used
+      }
+      const diskSizeStats: DiskSizeStats = {
+        time: statTime,
+        availableSizeMb: Math.floor((totalSize - usedSize) / 1024 / 1024),
+        usedSizeMb: Math.floor(usedSize / 1024 / 1024)
+      }
+      diskSizeStatsHistogram.push(diskSizeStats)
+    })
+    .catch((error: any) => {
+      logger.error(error)
+    })
+}
+
 ///////////////////////////
 
 async function collectStats(triggeredFromScheduler: boolean = true) {
@@ -143,6 +176,7 @@ async function collectStats(triggeredFromScheduler: boolean = true) {
     promises.push(collectMemoryStats(statCollectTime, timeInterval))
     promises.push(collectNetworkStats(statCollectTime, timeInterval))
     promises.push(collectDiskStats(statCollectTime, timeInterval))
+    promises.push(collectDiskSizeStats(statCollectTime, timeInterval))
 
     return promises
   } finally {
@@ -193,6 +227,14 @@ function startHttpServer() {
               response.end()
             }
             break
+          }
+          case '/disk_size': {
+            if (request.method === 'GET') {
+              response.end(JSON.stringify(diskSizeStatsHistogram))
+            } else {
+              response.statusCode = 405
+              response.end()
+            }
           }
           case '/collect': {
             if (request.method === 'POST') {

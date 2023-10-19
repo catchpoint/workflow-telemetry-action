@@ -31693,6 +31693,7 @@ function reportWorkflowMetrics() {
         const { activeMemoryX, availableMemoryX } = yield getMemoryStats();
         const { networkReadX, networkWriteX } = yield getNetworkStats();
         const { diskReadX, diskWriteX } = yield getDiskStats();
+        const { diskAvailableX, diskUsedX } = yield getDiskSizeStats();
         const cpuLoad = userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
             ? yield getStackedAreaGraph({
                 label: 'CPU Load (%)',
@@ -31776,6 +31777,24 @@ function reportWorkflowMetrics() {
                 }
             })
             : null;
+        const diskSizeUsage = diskUsedX && diskUsedX.length && diskAvailableX && diskAvailableX.length
+            ? yield getStackedAreaGraph({
+                label: 'Disk Usage (MB)',
+                axisColor,
+                areas: [
+                    {
+                        label: 'Used',
+                        color: '#377eb899',
+                        points: diskUsedX
+                    },
+                    {
+                        label: 'Free',
+                        color: '#4daf4a99',
+                        points: diskAvailableX
+                    }
+                ]
+            })
+            : null;
         const postContentItems = [];
         if (cpuLoad) {
             postContentItems.push('### CPU Metrics', `![${cpuLoad.id}](${cpuLoad.url})`, '');
@@ -31791,6 +31810,9 @@ function reportWorkflowMetrics() {
         }
         if (diskIORead && diskIOWrite) {
             postContentItems.push(`| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`);
+        }
+        if (diskSizeUsage) {
+            postContentItems.push('### Disk Size Metrics', `![${diskSizeUsage.id}](${diskSizeUsage.url})`, '');
         }
         return postContentItems.join('\n');
     });
@@ -31885,6 +31907,30 @@ function getDiskStats() {
             });
         });
         return { diskReadX, diskWriteX };
+    });
+}
+function getDiskSizeStats() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const diskAvailableX = [];
+        const diskUsedX = [];
+        logger.debug('Getting disk size stats ...');
+        const response = yield axios_1.default.get(`http://localhost:${STAT_SERVER_PORT}/disk_size`);
+        if (logger.isDebugEnabled()) {
+            logger.debug(`Got disk size stats: ${JSON.stringify(response.data)}`);
+        }
+        response.data.forEach((element) => {
+            diskAvailableX.push({
+                x: element.time,
+                y: element.availableSizeMb && element.availableSizeMb > 0
+                    ? element.availableSizeMb
+                    : 0
+            });
+            diskUsedX.push({
+                x: element.time,
+                y: element.usedSizeMb && element.usedSizeMb > 0 ? element.usedSizeMb : 0
+            });
+        });
+        return { diskAvailableX, diskUsedX };
     });
 }
 function getLineGraph(options) {
