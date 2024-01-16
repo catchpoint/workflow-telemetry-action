@@ -94,21 +94,42 @@ async function reportAll(
   }
 
   const commentOnPR: string = core.getInput('comment_on_pr')
-  if (pull_request && 'true' === commentOnPR) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`)
-    }
+  if ('true' === commentOnPR) {
+    const prNumbers = await getPrNumbers();
+    if (prNumbers) {
+      if (logger.isDebugEnabled()) {
+        logger.debug(`Found Pull Request: ${JSON.stringify(prNumbers)}`)
+      }
 
-    await octokit.rest.issues.createComment({
-      ...github.context.repo,
-      issue_number: Number(github.context.payload.pull_request?.number),
-      body: postContent
-    })
+      for (let prNumber of prNumbers) {
+        await octokit.rest.issues.createComment({
+          ...github.context.repo,
+          issue_number: prNumber,
+          body: postContent
+        })
+      }
+    } else {
+      logger.debug(`Couldn't find Pull Request`)
+    }
   } else {
-    logger.debug(`Couldn't find Pull Request`)
+    logger.debug(`commentOnPR is false`)
   }
 
   logger.info(`Reporting all content completed`)
+}
+
+export async function getPrNumbers(): Promise<number[] | undefined> {
+  if (pull_request) {
+    return [pull_request.number]
+  }
+
+  const { data: pullRequests } = await octokit.repos.listPullRequestsAssociatedWithCommit({
+    owner: repo.owner,
+    repo: repo.repo,
+    commit_sha: sha,
+  });
+
+  return pullRequests.filter((pr) => pr.state === "open").map((pr) => pr.number).slice(0, 10);
 }
 
 async function run(): Promise<void> {
