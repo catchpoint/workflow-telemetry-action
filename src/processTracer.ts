@@ -67,9 +67,8 @@ export async function start(): Promise<boolean> {
   logger.info(`Starting process tracer ...`)
 
   try {
-    const procTracerBinaryName:
-      | string
-      | null = await getProcessTracerBinaryName()
+    const procTracerBinaryName: string | null =
+      await getProcessTracerBinaryName()
     if (procTracerBinaryName) {
       const procTraceOutFilePath = path.join(
         __dirname,

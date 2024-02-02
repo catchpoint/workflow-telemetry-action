@@ -8,11 +8,11 @@ inputs:
     required: false
   metric_frequency:
     description: "Metric collection frequency in seconds. Must be a number. Defaults to '5'."
-    default: 5
+    default: "5"
     required: false
   proc_trace_min_duration:
     description: "Puts minimum limit for process execution duration to be traced. Must be a number. Defaults to '-1' which means process duration filtering is not applied."
-    default: -1
+    default: "-1"
     required: false
   proc_trace_sys_enable:
     description: "Enables tracing default system processes ('aws', 'cat', 'sed', ...). Defaults to 'false'."
@@ -24,7 +24,7 @@ inputs:
     required: false
   proc_trace_chart_max_count:
     description: "Maximum number of processes to be shown in trace chart (applicable if `proc_trace_chart_show` input is `true`). Must be a number. Defaults to '100'."
-    default: 100
+    default: "100"
     required: false
   proc_trace_table_show:
     description: "Enables showing traced processes in trace table. Defaults to 'false'."
@@ -44,7 +44,7 @@ inputs:
     required: false
 
 runs:
-  using: "node16"
+  using: "node20"
   main: dist/main/index.js
   post: dist/post/index.js
 branding:
