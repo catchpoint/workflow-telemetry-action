@@ -1,4 +1,4 @@
-name: Tag v1
+name: tag-v2
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
-      - name: Tag ${{ github.event.inputs.tag }} as v1
+      - name: Tag ${{ github.event.inputs.tag }} as v2
         run: |
-          git tag v1 -f
+          git tag v2 -f
           git push origin --tags -f
