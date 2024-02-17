@@ -21802,11 +21802,12 @@ function report(currentJob) {
                 });
                 for (const command of filteredCommands) {
                     const extraProcessInfo = getExtraProcessInfo(command);
+                    const escapedName = command.name.replace(/:/g, '#colon;');
                     if (extraProcessInfo) {
-                        chartContent = chartContent.concat('\t', `${command.name} (${extraProcessInfo}) : `);
+                        chartContent = chartContent.concat('\t', `${escapedName} (${extraProcessInfo}) : `);
                     }
                     else {
-                        chartContent = chartContent.concat('\t', `${command.name} : `);
+                        chartContent = chartContent.concat('\t', `${escapedName} : `);
                     }
                     if (command.exitCode !== 0) {
                         // to show red

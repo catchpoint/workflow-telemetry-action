@@ -67,9 +67,8 @@ export async function start(): Promise<boolean> {
   logger.info(`Starting process tracer ...`)
 
   try {
-    const procTracerBinaryName:
-      | string
-      | null = await getProcessTracerBinaryName()
+    const procTracerBinaryName: string | null =
+      await getProcessTracerBinaryName()
     if (procTracerBinaryName) {
       const procTraceOutFilePath = path.join(
         __dirname,
@@ -219,13 +218,14 @@ export async function report(
 
       for (const command of filteredCommands) {
         const extraProcessInfo: string | null = getExtraProcessInfo(command)
+        const escapedName = command.name.replace(/:/g, '#colon;')
         if (extraProcessInfo) {
           chartContent = chartContent.concat(
             '\t',
-            `${command.name} (${extraProcessInfo}) : `
+            `${escapedName} (${extraProcessInfo}) : `
           )
         } else {
-          chartContent = chartContent.concat('\t', `${command.name} : `)
+          chartContent = chartContent.concat('\t', `${escapedName} : `)
         }
         if (command.exitCode !== 0) {
           // to show red
