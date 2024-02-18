@@ -54235,6 +54235,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+<<<<<<< HEAD
+exports.getPrNumbers = void 0;
+const core = __importStar(__webpack_require__(2186));
+const github = __importStar(__webpack_require__(5438));
+const action_1 = __webpack_require__(1231);
+const stepTracer = __importStar(__webpack_require__(377));
+const statCollector = __importStar(__webpack_require__(6451));
+const processTracer = __importStar(__webpack_require__(6160));
+const logger = __importStar(__webpack_require__(4636));
+=======
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const action_1 = __nccwpck_require__(1231);
@@ -54242,6 +54252,7 @@ const stepTracer = __importStar(__nccwpck_require__(377));
 const statCollector = __importStar(__nccwpck_require__(6451));
 const processTracer = __importStar(__nccwpck_require__(6160));
 const logger = __importStar(__nccwpck_require__(4636));
+>>>>>>> 59062945245840662d6233dc45cc9be6b23eb8e5
 const { pull_request } = github.context.payload;
 const { workflow, job, repo, runId, sha } = github.context;
 const PAGE_SIZE = 100;
@@ -54292,7 +54303,6 @@ function getCurrentJob() {
     });
 }
 function reportAll(currentJob, content) {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         logger.info(`Reporting all content ...`);
         logger.debug(`Workflow - Job: ${workflow} - ${job}`);
@@ -54313,18 +54323,40 @@ function reportAll(currentJob, content) {
             yield core.summary.write();
         }
         const commentOnPR = core.getInput('comment_on_pr');
-        if (pull_request && 'true' === commentOnPR) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`);
+        if ('true' === commentOnPR) {
+            const prNumbers = yield getPrNumbers();
+            if (prNumbers) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(`Found Pull Request: ${JSON.stringify(prNumbers)}`);
+                }
+                for (let prNumber of prNumbers) {
+                    yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: prNumber, body: postContent }));
+                }
             }
-            yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: Number((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number), body: postContent }));
+            else {
+                logger.debug(`Couldn't find Pull Request`);
+            }
         }
         else {
-            logger.debug(`Couldn't find Pull Request`);
+            logger.debug(`commentOnPR is false`);
         }
         logger.info(`Reporting all content completed`);
     });
 }
+function getPrNumbers() {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (pull_request) {
+            return [pull_request.number];
+        }
+        const { data: pullRequests } = yield octokit.repos.listPullRequestsAssociatedWithCommit({
+            owner: repo.owner,
+            repo: repo.repo,
+            commit_sha: sha,
+        });
+        return pullRequests.filter((pr) => pr.state === "open").map((pr) => pr.number).slice(0, 10);
+    });
+}
+exports.getPrNumbers = getPrNumbers;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
