@@ -99,19 +99,23 @@ async function reportAll(
       logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`)
     }
 
-    const issueNumber = Number(github.context.payload.pull_request?.number);
+    const issueNumber = Number(github.context.payload.pull_request?.number)
     let createComment: boolean = true
     if ('update' === commentOnPR) {
-      let existingComment, comments, page = 1;
+      let existingComment,
+        comments,
+        page = 1
       do {
         comments = await octokit.rest.issues.listComments({
           ...github.context.repo,
           issue_number: issueNumber,
-          page,
+          page
         })
-        existingComment = comments.data.find(comment => comment.body.startsWith(title))
+        existingComment = comments.data.find(comment =>
+          comment.body.startsWith(title)
+        )
         page++
-      } while (!existingComment && comments.data.length > 0);
+      } while (!existingComment && comments.data.length > 0)
 
       if (existingComment) {
         if (logger.isDebugEnabled()) {
@@ -121,7 +125,7 @@ async function reportAll(
         await octokit.rest.issues.updateComment({
           ...github.context.repo,
           comment_id: existingComment.id,
-          body: postContent,
+          body: postContent
         })
       }
     }
