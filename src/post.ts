@@ -112,7 +112,7 @@ async function reportAll(
           page
         })
         existingComment = comments.data.find(comment =>
-          comment.body.startsWith(title)
+          comment.body?.startsWith(title)
         )
         page++
       } while (!existingComment && comments.data.length > 0)
