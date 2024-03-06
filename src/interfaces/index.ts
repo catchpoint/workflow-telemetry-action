@@ -29,6 +29,12 @@ export interface DiskStats {
   readonly wxMb: number
 }
 
+export interface DiskSizeStats {
+  readonly time: number
+  readonly availableSizeMb: number
+  readonly usedSizeMb: number
+}
+
 export interface ProcessedStats {
   readonly x: number
   readonly y: number
@@ -52,6 +58,11 @@ export interface ProcessedNetworkStats {
 export interface ProcessedDiskStats {
   readonly diskReadX: ProcessedStats[]
   readonly diskWriteX: ProcessedStats[]
+}
+
+export interface ProcessedDiskSizeStats {
+  readonly diskAvailableX: ProcessedStats[]
+  readonly diskUsedX: ProcessedStats[]
 }
 
 export interface LineGraphOptions {

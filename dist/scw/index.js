@@ -40770,6 +40770,27 @@ function collectDiskStats(statTime, timeInterval) {
         logger.error(error);
     });
 }
+const diskSizeStatsHistogram = [];
+function collectDiskSizeStats(statTime, timeInterval) {
+    return systeminformation_1.default
+        .fsSize()
+        .then((data) => {
+        let totalSize = 0, usedSize = 0;
+        for (let fsd of data) {
+            totalSize += fsd.size;
+            usedSize += fsd.used;
+        }
+        const diskSizeStats = {
+            time: statTime,
+            availableSizeMb: Math.floor((totalSize - usedSize) / 1024 / 1024),
+            usedSizeMb: Math.floor(usedSize / 1024 / 1024)
+        };
+        diskSizeStatsHistogram.push(diskSizeStats);
+    })
+        .catch((error) => {
+        logger.error(error);
+    });
+}
 ///////////////////////////
 function collectStats(triggeredFromScheduler = true) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -40784,6 +40805,7 @@ function collectStats(triggeredFromScheduler = true) {
             promises.push(collectMemoryStats(statCollectTime, timeInterval));
             promises.push(collectNetworkStats(statCollectTime, timeInterval));
             promises.push(collectDiskStats(statCollectTime, timeInterval));
+            promises.push(collectDiskSizeStats(statCollectTime, timeInterval));
             return promises;
         }
         finally {
@@ -40837,6 +40859,15 @@ function startHttpServer() {
                         response.end();
                     }
                     break;
+                }
+                case '/disk_size': {
+                    if (request.method === 'GET') {
+                        response.end(JSON.stringify(diskSizeStatsHistogram));
+                    }
+                    else {
+                        response.statusCode = 405;
+                        response.end();
+                    }
                 }
                 case '/collect': {
                     if (request.method === 'POST') {
