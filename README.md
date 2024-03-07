@@ -51,8 +51,14 @@ An example output of a simple workflow run will look like this.
 To use the action, add the following step before the steps you want to track.
 
 ```yaml
-- name: Collect Workflow Telemetry
-  uses: catchpoint/workflow-telemetry-action@v2
+permissions:
+  pull-requests: write
+jobs:
+  workflow-telemetry-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect Workflow Telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
 ```
 
 ## Configuration
