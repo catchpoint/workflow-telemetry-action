@@ -94,16 +94,49 @@ async function reportAll(
   }
 
   const commentOnPR: string = core.getInput('comment_on_pr')
-  if (pull_request && 'true' === commentOnPR) {
+  if (pull_request && ['true', 'update'].indexOf(commentOnPR) >= 0) {
     if (logger.isDebugEnabled()) {
       logger.debug(`Found Pull Request: ${JSON.stringify(pull_request)}`)
     }
 
-    await octokit.rest.issues.createComment({
-      ...github.context.repo,
-      issue_number: Number(github.context.payload.pull_request?.number),
-      body: postContent
-    })
+    const issueNumber = Number(github.context.payload.pull_request?.number)
+    let createComment: boolean = true
+    if ('update' === commentOnPR) {
+      let existingComment,
+        comments,
+        page = 1
+      do {
+        comments = await octokit.rest.issues.listComments({
+          ...github.context.repo,
+          issue_number: issueNumber,
+          page
+        })
+        existingComment = comments.data.find(comment =>
+          comment.body?.startsWith(title)
+        )
+        page++
+      } while (!existingComment && comments.data.length > 0)
+
+      if (existingComment) {
+        if (logger.isDebugEnabled()) {
+          logger.debug(`Found Comment: ${existingComment.id}`)
+        }
+        createComment = false
+        await octokit.rest.issues.updateComment({
+          ...github.context.repo,
+          comment_id: existingComment.id,
+          body: postContent
+        })
+      }
+    }
+
+    if (createComment) {
+      await octokit.rest.issues.createComment({
+        ...github.context.repo,
+        issue_number: issueNumber,
+        body: postContent
+      })
+    }
   } else {
     logger.debug(`Couldn't find Pull Request`)
   }
